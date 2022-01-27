@@ -1,4 +1,21 @@
 require 'date'
+require 'optparse'
+
+### 事前準備
+### 当月の各パラメータを取得
+today = Date.today
+year = today.year
+month = today.month
+
+### オプションの処理
+opt = OptionParser.new
+
+### オプションの登録
+# オプション名とその処理を定義する
+opt.on('-y opt_year') { |opt_year| year = opt_year.to_i }
+opt.on('-m opt_month') { |opt_month| month = opt_month.to_i }
+
+argv = opt.parse(ARGV)
 
 ### 変数一覧
 # today：当月
@@ -6,33 +23,10 @@ require 'date'
 # month：当月の月
 # 曜日：wday
 
-### メモ
-# Date.new(year,month,1) ...当月の月初を取得
-# Date.new(year,month,1).next_month.prev_day ...当月の月末を取得
-
-### 当月の各パラメータを取得
-today = Date.today
-year = today.year
-month = today.month
-
-
 ### 単純なカレンダー表示
-# days = Date.new(year,month,1).next_month.prev_day.day
 days = Date.new(year, month, -1).day
 
-=begin
-1.step(days,1) do |day|
-  if day % 7 == 1
-    print (" " + day.to_s).chars.slice(-2..-1).join
-  else
-    print ("  " + day.to_s).chars.slice(-3..-1).join
-  end
-  print "\n" if day % 7 == 0
-end
-=end
-
-cal = [["  ", "   ", "   ", "   ", "   ", "   ", "   "],
-      ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
+calendar = [["  ", "   ", "   ", "   ", "   ", "   ", "   "],
       ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
       ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
       ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
@@ -49,21 +43,22 @@ week = 0
   else
     n = -3
   end
-  cal[week][col] = (cal[week][col] + day.to_s).chars.slice(n..-1).join
+  #当月の日数を変数calenderの適切な座標に埋め込む
+  calendar[week][col] = (calendar[week][col] + day.to_s).chars.slice(n..-1).join
   week += 1 if col == 6
 end
 
 ### 出力
 # カレンダー：タイトル
-title = "      #{month.to_s}月 #{year}\n"
-print title
+title = "      #{month.to_s}月 #{year}         "
+print title.slice(0..21) + "\n"
 
 # カレンダー：曜日
-wday = ["日 ", "月 ", "火 ", "水 ", "木 ", "金 ", "土 "]
+wday = ["日 ", "月 ", "火 ", "水 ", "木 ", "金 ", "土  "]
 print wday.join + "\n"
 
 # カレンダー：日数部分
-rows = cal.size
+rows = calendar.size
 rows.times do |row|
-  print cal[row].join + "\n"
+  print calendar[row].join + "  \n"
 end
