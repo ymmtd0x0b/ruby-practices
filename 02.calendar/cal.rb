@@ -2,6 +2,60 @@ require 'date'
 require 'optparse'
 
 #カレンダーの雛形
+class CalOneYear #１年分のカレンダー
+  def initialize(today, year, month, highlight)
+    @today = today
+    @year = year
+    @month = month
+    @highlight = highlight
+    @calendar = Array.new(4){ Array.new(3) }
+  end
+
+  def create_cal
+    month = 1
+    #１２ヶ月分のカレンダーを作成
+    4.times do |i|
+      3.times do |j|
+        @calendar[i][j] = CalOneMonth.new(@today, @year, month, @highlight)
+        @calendar[i][j].create_cal
+        month += 1
+      end
+    end
+  end
+
+  #出力処理
+  def print_cal #３ヶ月分の出力
+    ###それぞれ独立した各月のカレンダーを行単位で結合して出力する
+    #タイトルの出力
+    year_title = "                            #{@year}"
+    print year_title + "\n"
+    4.times do |r|
+      title_line = ""
+      3.times do |i|
+        title_line += ("         " + @calendar[r][i].month.to_s + "月").chars.slice(-11..-1).join + "          " + " "
+      end
+      print title_line + "\n"
+
+      #曜日の出力
+      wday_line = ""
+      3.times do |i|
+        wday_line += @calendar[r][i].wday.join
+      end
+      print wday_line + "\n"
+    
+      #カレンダー：日数部分
+      6.times do |row| #カレンダーの日数部分は６行
+        date_line = ""
+        3.times do |i|
+          date_line += @calendar[r][i].calendar[row].join + "  "
+        end
+        print date_line + "\n"
+      end
+      print "\n" #１行空白
+    end
+  end
+end
+
 class CalThreeMonths #３ヶ月分のカレンダー
   def initialize(today, year, month, highlight)
     @today = today
@@ -55,7 +109,7 @@ class CalThreeMonths #３ヶ月分のカレンダー
 end
 
 class CalOneMonth #１ヶ月分のカレンダー
-  attr_reader :title, :wday, :calendar
+  attr_reader :title, :wday, :month, :calendar
   def initialize(today, year, month, highlight)
     #インスタンス変数
     @today = today
@@ -128,14 +182,19 @@ year = today.year
 month = today.month
 
 ###デフォルト値の設定
-highlight = false #当日のハイライト
+highlight = true #当日のハイライト
 
 ###オプションの処理
 opt = OptionParser.new
 
 ###オプションの登録
 #オプション名とその処理を定義する
-opt.on('-y opt_year') { |opt_year| year = opt_year.to_i }
+opt.on('-y opt_year') { year = opt_year.to_i }
+opt.on('-y') do
+  cal = CalOneYear.new(today, year, month, highlight)
+  cal.create_cal #カレンダーの作成
+  cal.print_cal #出力  
+end
 opt.on('-m opt_month') { |opt_month| month = opt_month.to_i }
 opt.on('-1') {} 
 opt.on('-3') do
