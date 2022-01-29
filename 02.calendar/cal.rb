@@ -1,6 +1,8 @@
 require 'date'
 require 'optparse'
-
+###################
+#クラスの定義
+###################
 #カレンダーの雛形
 class CalOneYear #１年分のカレンダー
   def initialize(today, year, month, highlight)
@@ -16,7 +18,7 @@ class CalOneYear #１年分のカレンダー
     #１２ヶ月分のカレンダーを作成
     4.times do |i|
       3.times do |j|
-        @calendar[i][j] = CalOneMonth.new(@today, @year, month, @highlight)
+        @calendar[i][j] = CalOneMonth.new(@today, @year, month, @otp_h)
         @calendar[i][j].create_cal
         month += 1
       end
@@ -73,7 +75,7 @@ class CalThreeMonths #３ヶ月分のカレンダー
     #３ヶ月分のカレンダーを作成
     3.times do |i|
       #変数dateに設定された日付のカレンダーを作成
-      @calendar[i] = CalOneMonth.new(@today, date.year, date.month, @highlight)
+      @calendar[i] = CalOneMonth.new(@today, date.year, date.month, @otp_h)
       @calendar[i].create_cal
 
       #基点の日付を更新(次月を計算)
@@ -175,39 +177,106 @@ class CalOneMonth #１ヶ月分のカレンダー
   end
 end
 
+class GetOptions
+  def initialize
+    @options = {}
+    OptionParser.new do |opt|
+      opt.on('-y [value]', '--year [value]') { |v| @options[:y] = v  }
+      opt.on('-m value', '--month value') { |v| @options[:m] = v  }
+      opt.on('-h') { |v| @options[:h] = true  }
+      opt.on('-1') { |v| @options[:one] = true  }
+      opt.on('-3') { |v| @options[:three] = true  }
+      opt.parse!(ARGV)
+    end
+  end
+
+  def has?(name)
+    @options.include?(name)
+  end
+
+  def get(name)
+    @options[name]
+  end
+end
+
+class GetArgument
+  def initialize
+    @arg = {}
+    if ARGV.size >= 2
+      @arg[:m] = ARGV[0].to_i
+      @arg[:y] = ARGV[1].to_i
+    elsif ARGV.size == 1
+      @arg[:y] = ARGV[0].to_i
+    end
+  end
+
+  def has_both?
+    ARGV.size >= 2
+  end
+
+  def has_month_only?
+    !@arg[:m].nil?
+  end
+
+  def has_year_only?
+    !@arg[:y].nil?
+  end
+
+  def get(name)
+    @arg[name]
+  end
+end
+
 ###事前準備
 ###当月の各パラメータを取得
 today = Date.today
 year = today.year
 month = today.month
 
-###デフォルト値の設定
-highlight = true #当日のハイライト
-
-###オプションの処理
-opt = OptionParser.new
-
-###オプションの登録
-#オプション名とその処理を定義する
-opt.on('-y opt_year') { year = opt_year.to_i }
-opt.on('-y') do
-  cal = CalOneYear.new(today, year, month, highlight)
-  cal.create_cal #カレンダーの作成
-  cal.print_cal #出力  
-end
-opt.on('-m opt_month') { |opt_month| month = opt_month.to_i }
-opt.on('-1') {} 
-opt.on('-3') do
-  cal = CalThreeMonths.new(today, year, month, highlight)
-  cal.create_cal #カレンダーの作成
-  cal.print_cal #出力
-end
-opt.on('-h') { highlight = false }
-
-#オプシションの実行
-argv = opt.parse(ARGV)
-
+###############
 #メイン処理
-# cal = CalOneMonth.new(today, year, month, highlight) #初期化
-# cal.create_cal #カレンダーの作成
-# cal.print_cal #出力
+###############
+option = GetOptions.new
+arg = GetArgument.new
+
+case #オプションによる処理の分岐
+#cal -y / cal -y 数値
+when option.has?(:y) == true
+  year = option.get(:y).to_i unless option.get(:y).nil? #引数有りならyearに代入
+  cal = CalOneYear.new(today, year, month, true)
+
+#cal -m / cal -m 数値
+when option.has?(:m) == true 
+  month = option.get(:m).to_i
+  cal = CalOneMonth.new(today, year, month, true)
+
+#cal -h
+when option.has?(:h) == true
+  cal = CalOneMonth.new(today, year, month, false)
+
+#cal -1
+when option.has?(:one) == true
+  cal = CalOneYear.new(today, year, month, true)
+
+#cal -3 
+when option.has?(:three) == true
+  cal = CalThreeMonths.new(today, year, month, true)
+
+#cal month year
+when arg.has_both? == true
+  year = arg.get(:y)
+  month = arg.get(:m)
+  cal = CalOneMonth.new(today, year, month, true)
+
+#cal year
+when arg.has_year_only? == true
+  year = arg.get(:y)
+  cal = CalOneYear.new(today, year, month, true)
+
+#cal
+else
+  cal = CalOneMonth.new(today, year, month, true)
+end
+
+cal.create_cal #カレンダーの作成
+cal.print_cal #出力
