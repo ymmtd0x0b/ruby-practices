@@ -8,7 +8,8 @@ require 'optparse'
 #クラスの定義
 ###################
 #カレンダーの雛形
-class CalOneYear #１年分のカレンダー
+class OneYearCalendar #１年分のカレンダー
+  #初期化
   def initialize(date)
     @date = date
     @year = date.year
@@ -16,21 +17,22 @@ class CalOneYear #１年分のカレンダー
     @calendar = Array.new(4){ Array.new(3) }
   end
 
-  def create_cal
+  #カレンダーのデータを作成するメソッド
+  def create_calendar
     month = 1
     #１２ヶ月分のカレンダーを作成
     4.times do |i|
       3.times do |j|
         @date.month = month
         @calendar[i][j] = CalOneMonth.new(@date)
-        @calendar[i][j].create_cal
+        @calendar[i][j].create_calendar
         month += 1
       end
     end
   end
 
   #出力処理
-  def print_cal #３ヶ月分の出力
+  def print_calendar #３ヶ月分の出力
     ###それぞれ独立した各月のカレンダーを行単位で結合して出力する
     #タイトルの出力
     year_title = "                            #{@year}"
@@ -62,7 +64,8 @@ class CalOneYear #１年分のカレンダー
   end
 end
 
-class CalThreeMonths #３ヶ月分のカレンダー
+class ThreeMonthsCalendar #３ヶ月分(前月/今月/来月)のカレンダー
+  #初期化
   def initialize(date)
     @date = date
     @year = date.year
@@ -70,10 +73,9 @@ class CalThreeMonths #３ヶ月分のカレンダー
     @calendar = Array.new(3)
   end
 
-  def create_cal
+  def create_calendar
     ###前月を基点の日付(変数date)として、３ヶ月分のカレンダーを作成
-    #基点の日付(前月)を計算
-    date = @date.today.prev_month
+    date = @date.today.prev_month #基点の日付(前月)を計算
     @date.year = date.year
     @date.month = date.month
 
@@ -81,7 +83,7 @@ class CalThreeMonths #３ヶ月分のカレンダー
     3.times do |i|
       #変数dateに設定された日付のカレンダーを作成
       @calendar[i] = CalOneMonth.new(@date)
-      @calendar[i].create_cal
+      @calendar[i].create_calendar
 
       #基点の日付を更新(次月を計算)
       date = date.next_month
@@ -91,7 +93,7 @@ class CalThreeMonths #３ヶ月分のカレンダー
   end
 
   #出力処理
-  def print_cal #３ヶ月分の出力
+  def print_calendar #３ヶ月分の出力
     ###それぞれ独立した各月のカレンダーを行単位で結合して出力する
     #タイトルの出力
     title_line =  @calendar[0].title +
@@ -119,6 +121,7 @@ end
 
 class CalOneMonth #１ヶ月分のカレンダー
   attr_reader :title, :wday, :month, :calendar
+  #初期化
   def initialize(date)
     #インスタンス変数
     @date = date
@@ -141,7 +144,7 @@ class CalOneMonth #１ヶ月分のカレンダー
   end
 
   #出力処理
-  def print_cal #１ヶ月分の出力
+  def print_calendar #１ヶ月分の出力
     #タイトルの出力
     print @title + "\n"
 
@@ -156,7 +159,7 @@ class CalOneMonth #１ヶ月分のカレンダー
   end
   
   #雛形に日数を埋め込む処理
-  def create_cal
+  def create_calendar
     #当月の日数を取得
     days = Date.new(@year, @month, -1).day
     
@@ -185,6 +188,7 @@ end
 
 #オプションを扱うクラス
 class Options
+  #初期化
   def initialize
     @options = {}
     OptionParser.new do |opt|      
@@ -238,19 +242,20 @@ class Options
     end
   end
 
-  #nameに渡されたオプションが存在するか確認
+  #nameに渡されたオプションが存在するか確認するメソッド
   def has?(name)
     @options.include?(name)
   end
 
-  #nameに渡されたオプションの値を取得
+  #nameに渡されたオプションの値を取得するメソッド
   def get(name)
     @options[name]
   end
 end
 
-#引数の扱うクラス
+#引数を扱うクラス
 class Arguments
+  #初期化
   def initialize
     @args = {}
     if ARGV.size >= 3 #引数３つ以上で処理の終了(引数異常)
@@ -263,24 +268,24 @@ class Arguments
     end
   end
 
-  #月に代入される値のチェック
+  #月に代入される値のチェックするメソッド
   def check_month(v)
-    m = v.to_i
+    m = v.to_i #仮に文字が渡されていればココで０になる
     if 1 <= m && m <= 12
       m
     else
-      #エラー処理
+      #１月〜１２月の範囲外のエラー処理
       print "cal: #{v} is neither a month number (1..12) nor a name\n"
       exit
     end
   end
 
-  #引数が２つある場合にtrueを返す
+  #引数が２つある場合にtrueを返すメソッド
   def has?(name)
     @args.include?(name)
   end
 
-  #月・年の値を取得
+  #月・年の値を取得するメソッド
   def get(name)
     @args[name]
   end
@@ -289,7 +294,7 @@ end
 #日付に関するデータを保持するクラス
 class GetDate
   attr_reader :today, :year, :month, :h
-  attr_writer :year, :month, :h
+  attr_writer :year, :month, :h #todayは初期化時点の値から変化しないよう制限
   def initialize
     @today = Date.today
     @year = @today.year
@@ -298,17 +303,20 @@ class GetDate
   end
 end
 
-###事前準備
-###コマンド実行時の日付の各パラメータを取得
-date = GetDate.new
-
 ###############
 #メイン処理
 ###############
+
+###事前準備
+#コマンド実行時の日付の各パラメータを取得
+date = GetDate.new
+
+#オプション・引数の解析&取得
 options = Options.new
 args = Arguments.new
 
-case #オプションによるコマンド処理の分岐
+#オプションによるコマンドの分岐
+case
 #cal -y [year] -m [month]
 when options.has?(:y) == true && options.has?(:m) == true
   date.year = options.get(:y)
@@ -317,12 +325,12 @@ when options.has?(:y) == true && options.has?(:m) == true
 
 #cal -y / cal -y [year]
 when options.has?(:y) == true
-  date.year = options.get(:y).to_i unless options.get(:y).nil? #引数有りならyearに代入
-  cal = CalOneYear.new(date)
+  date.year = options.get(:y) unless options.get(:y).nil? #引数有りならyearに代入
+  cal = OneYearCalendar.new(date)
 
-#cal -m / cal -m [month]
+#cal -m [month]
 when options.has?(:m) == true 
-  date.month = options.get(:m).to_i
+  date.month = options.get(:m)
   cal = CalOneMonth.new(date)
 
 #cal -h
@@ -332,11 +340,11 @@ when options.has?(:h) == true
 
 #cal -1
 when options.has?(:one) == true
-  cal = CalOneYear.new(date)
+  cal = OneYearCalendar.new(date)
 
 #cal -3 
 when options.has?(:three) == true
-  cal = CalThreeMonths.new(date)
+  cal = ThreeMonthsCalendar.new(date)
 
 #cal [month] [year]
 when args.has?(:m) == true #引数に月の値が存在すれば年・月が指定された事を意味する
@@ -347,12 +355,12 @@ when args.has?(:m) == true #引数に月の値が存在すれば年・月が指�
 #cal [year]
 when args.has?(:y) == true
   date.year = args.get(:y) #引数から年を取得
-  cal = CalOneYear.new(date)
+  cal = OneYearCalendar.new(date)
 
 #cal
 else
   cal = CalOneMonth.new(date)
 end
 
-cal.create_cal #カレンダーの作成
-cal.print_cal #出力
+cal.create_calendar #カレンダーの作成
+cal.print_calendar #出力
