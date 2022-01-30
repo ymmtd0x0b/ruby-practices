@@ -184,7 +184,7 @@ class CalOneMonth #１ヶ月分のカレンダー
   end
 end
 
-class GetOptions
+class Options
   def initialize
     @options = {}
     OptionParser.new do |opt|
@@ -196,7 +196,7 @@ class GetOptions
           @options[:y] = v
         else #エラー処理
           print "cal: not a valid year #{v}\n"
-          exit 1
+          exit
         end
       end 
 
@@ -204,14 +204,14 @@ class GetOptions
       opt.on('-m [value]', '--month [value]') do |value|
         if value.nil?
           print "cal: option requires an argument -- 'm'\n"
-          exit 1
+          exit
         end
         v = value.to_i
         if 1 <= v && v <= 12
           @options[:m] = v
         else
           print "cal: #{value} is neither a month number (1..12) nor a name\n"
-          exit 1
+          exit
         end
       end
       opt.on('-h') { |v| @options[:h] = true  } #cat -h の登録
@@ -221,7 +221,7 @@ class GetOptions
        opt.parse!(ARGV)
       rescue => e #設定外のオプションが指定された場合のエラー処理
         print "cal: invalid option -- '#{e.message.gsub(/.+: -/,'')}'\n"
-        exit 1
+        exit
       end
     end
   end
@@ -238,49 +238,39 @@ class GetOptions
 end
 
 #引数の扱うクラス
-class GetArgument
+class Arguments
   def initialize
-    @arg = {}
-    if ARGV.size >= 3 #引数３つ以上で処理の終了
-      exit 1
+    @args = {}
+    if ARGV.size >= 3 #引数３つ以上で処理の終了(引数異常)
+      exit
     elsif ARGV.size == 2 #引数２つで月・年に代入
-      @arg[:m] = check_month(ARGV[0])
-      @arg[:y] = ARGV[1].to_i
+      @args[:m] = check_month(ARGV[0])
+      @args[:y] = ARGV[1].to_i
     elsif ARGV.size == 1 #引数１つで年に代入
-      @arg[:y] = ARGV[0].to_i
+      @args[:y] = ARGV[0].to_i
     end
   end
 
   #月に代入される値のチェック
-  def check_month(arg)
-    m = arg.to_i
+  def check_month(v)
+    m = v.to_i
     if 1 <= m && m <= 12
       m
     else
       #エラー処理
-      print "cal: #{arg} is neither a month number (1..12) nor a name\n"
-      exit 1
+      print "cal: #{v} is neither a month number (1..12) nor a name\n"
+      exit
     end
   end
 
   #引数が２つある場合にtrueを返す
-  def has_both?
-    ARGV.size >= 2
-  end
-
-  #月のみ引数を持つ場合にtrueを返す
-  def has_month_only?
-    !@arg[:m].nil?
-  end
-
-  #年のみ引数を持つ場合にtreuを返す
-  def has_year_only?
-    !@arg[:y].nil?
+  def has?(name)
+    @args.include?(name)
   end
 
   #月・年の値を取得
   def get(name)
-    @arg[name]
+    @args[name]
   end
 end
 
@@ -302,41 +292,41 @@ date = GetDate.new
 ###############
 #メイン処理
 ###############
-option = GetOptions.new
-arg = GetArgument.new
+options = Options.new
+args = Arguments.new
 
 case #オプションによるコマンド処理の分岐
 #cal -y / cal -y 数値
-when option.has?(:y) == true
-  date.year = option.get(:y).to_i unless option.get(:y).nil? #引数有りならyearに代入
+when options.has?(:y) == true
+  date.year = options.get(:y).to_i unless options.get(:y).nil? #引数有りならyearに代入
   cal = CalOneYear.new(date, true)
 
 #cal -m / cal -m 数値
-when option.has?(:m) == true 
-  date.month = option.get(:m).to_i
+when options.has?(:m) == true 
+  date.month = options.get(:m).to_i
   cal = CalOneMonth.new(date, true)
 
 #cal -h
-when option.has?(:h) == true
+when options.has?(:h) == true
   cal = CalOneMonth.new(date, false)
 
 #cal -1
-when option.has?(:one) == true
+when options.has?(:one) == true
   cal = CalOneYear.new(date, true)
 
 #cal -3 
-when option.has?(:three) == true
+when options.has?(:three) == true
   cal = CalThreeMonths.new(date, true)
 
 #cal month year
-when arg.has_both? == true
-  date.year = arg.get(:y)
-  date.month = arg.get(:m)
+when args.has?(:m) == true #引数に月の値が存在すれば年・月が指定された事を意味する
+  date.year = args.get(:y) #引数から年を取得
+  date.month = args.get(:m) #引数から月を取得
   cal = CalOneMonth.new(date, true)
 
 #cal year
-when arg.has_year_only? == true
-  date.year = arg.get(:y)
+when args.has?(:y) == true
+  date.year = args.get(:y) #引数から年を取得
   cal = CalOneYear.new(date, true)
 
 #cal
