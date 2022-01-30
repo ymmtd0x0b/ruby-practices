@@ -35,7 +35,8 @@ class CalOneYear #１年分のカレンダー
     4.times do |r|
       title_line = ""
       3.times do |i|
-        title_line += ("         " + @calendar[r][i].month.to_s + "月").chars.slice(-11..-1).join + "          " + " "
+        # title_line += ("        " + @calendar[r][i].month.to_s + "月").chars.slice(-10..-1).join + "           " #ローカル環境の文字位置
+        title_line += ("        " + @calendar[r][i].month.to_s + "月" + "           ").chars.slice(0..20).join
       end
       print title_line + "\n"
 
@@ -54,7 +55,7 @@ class CalOneYear #１年分のカレンダー
         end
         print date_line + "\n"
       end
-      print "\n" #１行空白
+      # print "\n" #１行空白
     end
   end
 end
@@ -125,7 +126,8 @@ class CalOneMonth #１ヶ月分のカレンダー
     @h = h
 
     #カレンダー：タイトル
-    @title = ("      #{@month.to_s}月 #{@year}         ").chars.slice(0..21).join
+    # @title = ("      #{@month.to_s}月 #{@year}         ").chars.slice(0..21).join
+    @title = ("      #{@month.to_s}月 #{@year}        ").chars.slice(0..20).join
     
     #カレンダー：曜日
     @wday = ["日 ", "月 ", "火 ", "水 ", "木 ", "金 ", "土  "]
