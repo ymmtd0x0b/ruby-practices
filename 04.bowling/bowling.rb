@@ -33,4 +33,4 @@ point = 0
       frame.sum
     end
 end
-p point
+puts point
