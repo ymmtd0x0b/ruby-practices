@@ -5,18 +5,7 @@ class OneYearCalendar
   def initialize(date)
     @date = date
     @calendar = Array.new(4) { Array.new(3) }
-  end
-
-  def create_calendar
-    month = 1
-    4.times do |i| # １２ヶ月分のカレンダーを作成
-      3.times do |j|
-        @date.month = month
-        @calendar[i][j] = CalOneMonth.new(@date)
-        @calendar[i][j].create_calendar
-        month += 1
-      end
-    end
+    create_calendar
   end
 
   def print_calendar
@@ -25,7 +14,7 @@ class OneYearCalendar
     4.times do |r|
       title_line = ""
       3.times do |i|
-        title_line += ("        " + @calendar[r][i].month.to_s + "月" + "           ").chars.slice(0..20).join
+        title_line += ("        " + @calendar[r][i].date.month.to_s + "月" + "           ").chars.slice(0..20).join
       end
       print title_line + "\n"
 
@@ -44,28 +33,28 @@ class OneYearCalendar
       end
     end
   end
+
+  private
+
+  def create_calendar
+    month = 1
+    4.times do |i| # １２ヶ月分のカレンダーを作成
+      3.times do |j|
+        date = (month == @date.month) ? @date : GetDate.new(Date.new(@date.year, month, 1))
+        @calendar[i][j] = CalOneMonth.new(date)
+        month += 1
+      end
+    end
+  end
 end
 
 class ThreeMonthsCalendar
   def initialize(date)
     @date = date
     @calendar = Array.new(3)
+    create_calendar
   end
-
-  def create_calendar
-    date = @date.today.prev_month  # 基点の日付(前月)を計算
-    @date.year = date.year
-    @date.month = date.month
-   
-    3.times do |i| # ３ヶ月分のカレンダーを作成
-      @calendar[i] = CalOneMonth.new(@date)
-      @calendar[i].create_calendar
-      date = date.next_month # 基点の日付を更新(次月を計算)
-      @date.year = date.year
-      @date.month = date.month
-    end
-  end
-
+  
   def print_calendar
     title_line =  @calendar[0].title +
                   @calendar[1].title +
@@ -85,10 +74,25 @@ class ThreeMonthsCalendar
       print date_line + "\n"
     end
   end
+
+  private
+
+  def create_calendar
+    date = @date.today.prev_month  # 基点の日付(前月)を計算
+    @date.year = date.year
+    @date.month = date.month
+   
+    3.times do |i| # ３ヶ月分のカレンダーを作成
+      @calendar[i] = CalOneMonth.new(@date)
+      date = date.next_month # 基点の日付を更新(次月を計算)
+      @date.year = date.year
+      @date.month = date.month
+    end
+  end
 end
 
 class CalOneMonth
-  attr_reader :title, :wday, :month, :calendar
+  attr_reader :title, :wday, :month, :calendar, :date
   def initialize(date)
     @date = date
     @title = ("      #{@date.month.to_s}月 #{@date.year}        ").chars.slice(0..20).join
@@ -99,6 +103,7 @@ class CalOneMonth
                 ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
                 ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
                 ["  ", "   ", "   ", "   ", "   ", "   ", "   "],] # 日数の雛形(この雛形に当月の日数を埋めていく)
+    create_calendar
   end
 
   def print_calendar
@@ -110,19 +115,21 @@ class CalOneMonth
     end
   end
   
+  private
+
   def create_calendar
     days = Date.new(@date.year, @date.month, -1).day # 当月の日数を取得
     week = 0
     1.step(days,1) do |day|
       date = Date.new(@date.year,@date.month,day)
       col = date.wday
-      if date.sunday?
+      if date.sunday? # インデント数の調整(日曜日のみ１つ少ない)
         n = -2
       else
         n = -3
       end
 
-      if date == @date.today && @date.h == true # 当月の日数を変数calenderの適切な座標に埋め込む
+      if HIGH_LIGHT_DAY == date && @date.h == true # 当月の日数を変数calenderの適切な座標に埋め込む
         day = (" " + day.to_s).slice(-2..-1)  # １桁の数字は直前の空白も含んでハイライトを付ける / 擬似的に２桁にする
         day = "\e[47;30m" + day + "\e[0m"  # 背景色：白, 文字色：黒のカラーコードで日にちを挟む
         n -= 12  # ANSIカラーコードの分だけスライスする数を増やす
@@ -228,15 +235,17 @@ end
 class GetDate
   attr_reader :today, :year, :month, :h
   attr_writer :year, :month, :h
-  def initialize
-    @today = Date.today
+  def initialize(today)
+    @today = today
     @year = @today.year
     @month = @today.month
     @h = true  # ハイライトの有無 デフォルトでハイライト有効
   end
 end
 
-date = GetDate.new
+HIGH_LIGHT_DAY = Date.today
+
+date = GetDate.new(Date.today)
 options = Options.new
 args = Arguments.new
 
@@ -269,5 +278,4 @@ else  # cal
   cal = CalOneMonth.new(date)
 end
 
-cal.create_calendar
 cal.print_calendar
