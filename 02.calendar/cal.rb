@@ -4,8 +4,6 @@ require 'optparse'
 class OneYearCalendar
   def initialize(date)
     @date = date
-    @year = date.year
-    @month = date.month
     @calendar = Array.new(4) { Array.new(3) }
   end
 
@@ -22,7 +20,7 @@ class OneYearCalendar
   end
 
   def print_calendar
-    year_title = "                            #{@year}"
+    year_title = "                            #{@date.year}"
     print year_title + "\n"
     4.times do |r|
       title_line = ""
@@ -51,8 +49,6 @@ end
 class ThreeMonthsCalendar
   def initialize(date)
     @date = date
-    @year = date.year
-    @month = date.month
     @calendar = Array.new(3)
   end
 
@@ -95,9 +91,7 @@ class CalOneMonth
   attr_reader :title, :wday, :month, :calendar
   def initialize(date)
     @date = date
-    @year = date.year
-    @month = date.month
-    @title = ("      #{@month.to_s}月 #{@year}        ").chars.slice(0..20).join
+    @title = ("      #{@date.month.to_s}月 #{@date.year}        ").chars.slice(0..20).join
     @wday = ["日 ", "月 ", "火 ", "水 ", "木 ", "金 ", "土  "]
     @calendar = [["  ", "   ", "   ", "   ", "   ", "   ", "   "],
                 ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
@@ -117,17 +111,17 @@ class CalOneMonth
   end
   
   def create_calendar
-    days = Date.new(@year, @month, -1).day # 当月の日数を取得
+    days = Date.new(@date.year, @date.month, -1).day # 当月の日数を取得
     week = 0
     1.step(days,1) do |day|
-      date = Date.new(@year,@month,day)
+      date = Date.new(@date.year,@date.month,day)
       col = date.wday
       if date.sunday?
         n = -2
       else
         n = -3
       end
-      
+
       if date == @date.today && @date.h == true # 当月の日数を変数calenderの適切な座標に埋め込む
         day = (" " + day.to_s).slice(-2..-1)  # １桁の数字は直前の空白も含んでハイライトを付ける / 擬似的に２桁にする
         day = "\e[47;30m" + day + "\e[0m"  # 背景色：白, 文字色：黒のカラーコードで日にちを挟む
