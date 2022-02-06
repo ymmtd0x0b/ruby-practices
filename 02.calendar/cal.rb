@@ -2,140 +2,112 @@ require 'date'
 require 'optparse'
 
 class OneYearCalendar
+  YEAR_LINE_WIDTH = 63
   def initialize(date)
     @date = date
-    @calendar = Array.new(4) { Array.new(3) }
-    create_calendar
+    @calendar = create_calendar
+  end
+
+  def get_year_line
+    @date.year.to_s.center(YEAR_LINE_WIDTH) + "\n"
+  end
+
+  def get_months_line(three_months)
+    months = three_months.calendar.map do |one_month|
+      "#{one_month.date.month}月".center(CalOneMonth::LINE_WIDTH)
+    end
+    months.join(' ') + "\n"
   end
 
   def print_calendar
-    year_title = "                            #{@date.year}"
-    print year_title + "\n"
-    4.times do |r|
-      title_line = ""
-      3.times do |i|
-        title_line += ("        " + @calendar[r][i].date.month.to_s + "月" + "           ").chars.slice(0..20).join
-      end
-      print title_line + "\n"
-
-      wday_line = ""
-      3.times do |i|
-        wday_line += @calendar[r][i].wday.join
-      end
-      print wday_line + "\n"
-    
-      6.times do |row|  # カレンダーの日数部分は６行
-        date_line = ""
-        3.times do |i|
-          date_line += @calendar[r][i].calendar[row].join + "  "
-        end
-        print date_line + "\n"
-      end
+    print get_year_line
+    @calendar.map do |three_months|
+      print get_months_line(three_months)
+      print three_months.get_wdays_line
+      print three_months.get_dates_line
     end
   end
 
   private
 
   def create_calendar
-    month = 1
-    4.times do |i| # １２ヶ月分のカレンダーを作成
-      3.times do |j|
-        date = (month == @date.month) ? @date : GetDate.new(Date.new(@date.year, month, 1))
-        @calendar[i][j] = CalOneMonth.new(date)
-        month += 1
-      end
+    current_month = Date.new(@date.year, 1, 1)
+    4.times.map do |n|
+      ThreeMonthsCalendar.new(current_month.next_month(n * 3))
     end
   end
 end
 
 class ThreeMonthsCalendar
+  attr_reader :calendar
   def initialize(date)
     @date = date
-    @calendar = Array.new(3)
-    create_calendar
+    @calendar = create_calendar
+  end
+
+  def get_months_line
+    @calendar.map(&:month_line).join(' ') + "\n"
+  end
+
+  def get_wdays_line
+    Array.new(3,CalOneMonth::WDAY).join(' ') + "\n"
+  end
+
+  def get_dates_line
+    dates = 
+      (0..5).map do |week|
+        one_week_line = @calendar.map { |current_month| current_month.calendar[week] }
+        one_week_line.join('  ') + "\n"
+      end
+    dates.join('')
   end
   
   def print_calendar
-    title_line =  @calendar[0].title +
-                  @calendar[1].title +
-                  @calendar[2].title
-    print title_line + "\n"
-    wday_line = ""
-    3.times do |i|
-      wday_line += @calendar[i].wday.join
-    end
-
-    print wday_line + "\n"
-      6.times do |row|  # カレンダーの日数部分は６行
-      date_line = ""
-      3.times do |i|
-        date_line += @calendar[i].calendar[row].join + "  "
-      end
-      print date_line + "\n"
-    end
+    print get_months_line
+    print get_wdays_line
+    print get_dates_line
   end
 
   private
 
   def create_calendar
-    date = @date.today.prev_month  # 基点の日付(前月)を計算
-    @date.year = date.year
-    @date.month = date.month
-   
-    3.times do |i| # ３ヶ月分のカレンダーを作成
-      @calendar[i] = CalOneMonth.new(@date)
-      date = date.next_month # 基点の日付を更新(次月を計算)
-      @date.year = date.year
-      @date.month = date.month
+    (0..2).map do |n|
+      CalOneMonth.new(@date.next_month(n))
     end
   end
 end
 
 class CalOneMonth
-  attr_reader :title, :wday, :month, :calendar, :date
+  attr_reader :month_line, :wday, :calendar, :date
+  DATE_CELL_WIDTH = 3
+  LINE_WIDTH = 20
+  WDAY = "日 月 火 水 木 金 土 "
   def initialize(date)
     @date = date
-    @title = ("      #{@date.month.to_s}月 #{@date.year}        ").chars.slice(0..20).join
-    @wday = ["日 ", "月 ", "火 ", "水 ", "木 ", "金 ", "土  "]
-    @calendar = [["  ", "   ", "   ", "   ", "   ", "   ", "   "],
-                ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
-                ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
-                ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
-                ["  ", "   ", "   ", "   ", "   ", "   ", "   "],
-                ["  ", "   ", "   ", "   ", "   ", "   ", "   "],] # 日数の雛形(この雛形に当月の日数を埋めていく)
-    create_calendar
+    @month_line = ("#{@date.month}月 #{@date.year}").center(LINE_WIDTH)
+    @calendar = create_calendar
   end
 
   def print_calendar
-    print @title + "\n"
-    print @wday.join + "\n"    
-    rows = @calendar.size
-    rows.times do |row|  # カレンダー：日数部分
-      print @calendar[row].join + "  \n"
-    end
+    puts @month_line
+    puts WDAY
+    print @calendar.join("\n")
   end
   
   private
 
   def create_calendar
-    days = Date.new(@date.year, @date.month, -1).day # 当月の日数を取得
-    week = 0
-    1.step(days,1) do |day|
-      date = Date.new(@date.year,@date.month,day)
-      col = date.wday
-      if date.sunday? # インデント数の調整(日曜日のみ１つ少ない)
-        n = -2
-      else
-        n = -3
+    day = Date.new(@date.year, @date.month, 1)
+    Array.new(6, '').map do |one_week|
+      (0..6).each do |wday|
+        if wday == day.wday && @date.month == day.month
+          one_week += day.day.to_s.rjust(DATE_CELL_WIDTH,' ')
+          day = day.next_day
+        else
+          one_week += (' ' * DATE_CELL_WIDTH)
+        end
       end
-
-      if HIGH_LIGHT_DAY == date && @date.h == true # 当月の日数を変数calenderの適切な座標に埋め込む
-        day = (" " + day.to_s).slice(-2..-1)  # １桁の数字は直前の空白も含んでハイライトを付ける / 擬似的に２桁にする
-        day = "\e[47;30m" + day + "\e[0m"  # 背景色：白, 文字色：黒のカラーコードで日にちを挟む
-        n -= 12  # ANSIカラーコードの分だけスライスする数を増やす
-      end
-      @calendar[week][col] = (@calendar[week][col] + day.to_s).chars.slice(n..-1).join  # 日にちを適切な座標に埋め込み
-      week += 1 if col == 6  # 金曜日(行末)まで到達したら週(行)を更新...()内は配列表現
+      one_week.slice(1..) # calコマンドの出力表示に合わせるために先頭の空白を削除
     end
   end
 end
@@ -148,7 +120,7 @@ class Options
         if v.nil?  # オプションのみで引数が与えられなかった場合
           @options[:y] = nil
         elsif (v =~ /\A[0-9]+\z/) == 0  # 引数が数字でのみで構成させているかチェック
-          @options[:y] = v.to_i  # 数値に変換
+          @options[:y] = v.to_i
         else  # エラー処理
           print "cal: not a valid year #{v}\n"
           exit
@@ -160,7 +132,7 @@ class Options
           print "cal: option requires an argument -- 'm'\n"
           exit
         end
-        v = value.to_i  # 数値に変換
+        v = value.to_i
         if 1 <= v && v <= 12
           @options[:m] = v
         else
@@ -232,20 +204,7 @@ class Arguments
   end
 end
 
-class GetDate
-  attr_reader :today, :year, :month, :h
-  attr_writer :year, :month, :h
-  def initialize(today)
-    @today = today
-    @year = @today.year
-    @month = @today.month
-    @h = true  # ハイライトの有無 デフォルトでハイライト有効
-  end
-end
-
-HIGH_LIGHT_DAY = Date.today
-
-date = GetDate.new(Date.today)
+date = Date.today
 options = Options.new
 args = Arguments.new
 
@@ -261,11 +220,12 @@ when options.has?(:m) == true  # cal -m [month]
   date.month = options.get(:m)
   cal = CalOneMonth.new(date)
 when options.has?(:h) == true  # cal -h
-  date.h = false
+  # date.h = false
   cal = CalOneMonth.new(date)
 when options.has?(:one) == true  # cal -1
   cal = OneYearCalendar.new(date)
-when options.has?(:three) == true  # cal -3 
+when options.has?(:three) == true  # cal -3
+  date = date.prev_month
   cal = ThreeMonthsCalendar.new(date)
 when args.has?(:m) == true  # cal [month] [year] 引数に月の値が存在すれば年・月が指定された事を意味する
   date.year = args.get(:y)  # 引数から年を取得
