@@ -3,111 +3,111 @@ require 'optparse'
 
 class OneYearCalendar
   YEAR_LINE_WIDTH = 63
-  def initialize(date)
-    @date = date
-    @calendar = create_calendar
+  def initialize(year)
+    @year = year
+    @one_year_calendar = create_one_year_calendar(year)
   end
 
-  def get_year_line
-    @date.year.to_s.center(YEAR_LINE_WIDTH) + "\n"
+  def create_year_line
+    "#{@year.to_s.center(YEAR_LINE_WIDTH)}\n"
   end
 
-  def get_months_line(three_months)
-    months = three_months.calendar.map do |one_month|
-      "#{one_month.date.month}月".center(CalOneMonth::LINE_WIDTH)
+  def create_months_line(three_months)
+    months = three_months.three_months_calendar.map do |month|
+      month.month_title.sub(/ *([0-9]+月).*/, '\1').center(CalOneMonth::LINE_WIDTH)
     end
-    months.join(' ') + "\n"
+    "#{months.join(' ')}\n"
   end
 
   def print_calendar
-    print get_year_line
-    @calendar.map do |three_months|
-      print get_months_line(three_months)
-      print three_months.get_wdays_line
-      print three_months.get_dates_line
+    print create_year_line
+    @one_year_calendar.map do |three_months|
+      print create_months_line(three_months)
+      print three_months.create_wdays_line
+      print three_months.create_dates_lines
     end
   end
 
   private
 
-  def create_calendar
-    current_month = Date.new(@date.year, 1, 1)
-    Array.new(4) do |n|
-      ThreeMonthsCalendar.new(current_month.next_month(n * 3))
+  def create_one_year_calendar(year)
+    january = Date.new(year, 1, 1)
+    (0..3).map do |n|
+      date = january.next_month(n * 3)
+      ThreeMonthsCalendar.new(date.year, date.month)
     end
   end
 end
 
 class ThreeMonthsCalendar
-  attr_reader :calendar
-  def initialize(date)
-    @date = date
-    @calendar = create_calendar
+  attr_reader :three_months_calendar
+
+  def initialize(year, month)
+    @three_months_calendar = create_three_months_calendar(year, month)
   end
 
-  def get_months_line
-    @calendar.map(&:month_line).join(' ') + "\n"
+  def create_months_title
+    "#{@three_months_calendar.map(&:month_title).join(' ')}\n"
   end
 
-  def get_wdays_line
-    Array.new(3,CalOneMonth::WDAY).join(' ') + "\n"
+  def create_wdays_line
+    "#{Array.new(3) { CalOneMonth::WDAYS.join(' ') }.join('  ')}\n"
   end
 
-  def get_dates_line
-    dates = 
+  def create_dates_lines
+    dates =
       (0..5).map do |week|
-        one_week_line = @calendar.map { |current_month| current_month.calendar[week] }
-        one_week_line.join('  ') + "\n"
+        one_week_line = @three_months_calendar.map { |current_month| current_month.dates_table[week] }
+        "#{one_week_line.join('  ')}\n"
       end
     dates.join('')
   end
-  
+
   def print_calendar
-    print get_months_line
-    print get_wdays_line
-    print get_dates_line
+    print create_months_title
+    print create_wdays_line
+    print create_dates_lines
   end
 
   private
 
-  def create_calendar
+  def create_three_months_calendar(year, month)
+    base_date = Date.new(year, month, 1)
     (0..2).map do |n|
-      CalOneMonth.new(@date.next_month(n))
+      date = base_date.next_month(n)
+      CalOneMonth.new(date.year, date.month)
     end
   end
 end
 
 class CalOneMonth
-  attr_reader :month_line, :wday, :calendar, :date
+  attr_reader :month_title, :wdays, :dates_table
+
   DATE_CELL_WIDTH = 3
   LINE_WIDTH = 20
-  WDAY = "日 月 火 水 木 金 土 "
-  def initialize(date)
-    @date = date
-    @month_line = ("#{@date.month}月 #{@date.year}").center(LINE_WIDTH)
-    @calendar = create_calendar
+  WDAYS = %w[日 月 火 水 木 金 土]
+  def initialize(year, month)
+    @month_title = create_month_title(year, month)
+    @wdays = WDAYS.join(' ')
+    @dates_table = create_dates_table(year, month)
   end
 
   def print_calendar
-    puts @month_line
-    puts WDAY
-    print @calendar.join("\n")
+    puts @month_title
+    puts @wdays
+    print @dates_table.join("\n")
   end
 
-  def highlighting_today
-
-  end
-
-  def get_formatted_day(date)
-    day = (date.day / 10 == 0) ? " " + date.day.to_s : date.day.to_s # １桁の場合はスペースもハイライトの対象にする
+  def create_formatted_day(date)
+    day = (date.day / 10).zero? ? date.day.to_s.rjust(1, ' ') : date.day.to_s # １桁の場合はスペースもハイライトの対象にする
     if date == Date.today
-      " \e[47;30m" + day + "\e[0m"
+      " \e[47;30m#{day}\e[0m"
     else
-      day.rjust(DATE_CELL_WIDTH,' ')
+      day.rjust(DATE_CELL_WIDTH, ' ')
     end
   end
 
-  def get_formatted_blank_space
+  def create_formatted_blank_space
     (' ' * DATE_CELL_WIDTH)
   end
 
@@ -120,18 +120,22 @@ class CalOneMonth
       end
     end
   end
-  
+
   private
 
-  def create_calendar
-    date = Date.new(@date.year, @date.month, 1)
+  def create_month_title(year, month)
+    ("#{month}月 #{year}").center(LINE_WIDTH)
+  end
+
+  def create_dates_table(year, month)
+    date = Date.new(year, month, 1)
     Array.new(6, '').map do |week| # 1 month == 6 weeks
       (0..6).each do |wday| # 1 week == 6 days (0~6,0:Sunday)
-        if wday == date.wday && @date.month == date.month
-          week += get_formatted_day(date)
+        if wday == date.wday && month == date.month
+          week += create_formatted_day(date)
           date = date.next_day
         else
-          week += get_formatted_blank_space
+          week += create_formatted_blank_space
         end
       end
       week.slice(1..) # calコマンドの出力表示に合わせるために先頭の空白を削除
@@ -142,13 +146,13 @@ end
 class Options
   def initialize
     @options = {}
-    OptionParser.new do |opt|      
+    OptionParser.new do |opt|
       opt.on('-y [value]', '--year [value]') do |v|
-        if v.nil?  # オプションのみで引数が与えられなかった場合
+        if v.nil? # オプションのみで引数が与えられなかった場合
           @options[:y] = nil
-        elsif (v =~ /\A[0-9]+\z/) == 0  # 引数が数字でのみで構成させているかチェック
+        elsif (v =~ /\A[0-9]+\z/) == 0 # 引数が数字でのみで構成させているかチェック
           @options[:y] = v.to_i
-        else  # エラー処理
+        else # エラー処理
           print "cal: not a valid year #{v}\n"
           exit
         end
@@ -167,9 +171,9 @@ class Options
           exit
         end
       end
-      opt.on('-h') { |v| @options[:h] = true  }
-      opt.on('-1') { |v| @options[:one] = true  }
-      opt.on('-3') { |v| @options[:three] = true  }
+      opt.on('-h') { |v| @options[:h] = true }
+      opt.on('-1') { |v| @options[:one] = true }
+      opt.on('-3') { |v| @options[:three] = true }
       begin
        opt.parse!(ARGV)
       rescue => e
@@ -177,12 +181,12 @@ class Options
         exit
       end
 
-      if self.has?(:y) && self.has?(:m)  # cal -y year -m month において、片方の引数が与えられていない場合はエラーとして終了
+      if self.has?(:y) && self.has?(:m) # cal -y year -m month において、片方の引数が与えられていない場合はエラーとして終了
         case
-        when self.get(:y).nil? == true
+        when self.get(:y).nil?
           print "cal: option requires an argument -- 'y'\n"
           exit
-        when self.get(:m).nil? == true
+        when self.get(:m).nil?
           print "cal: option requires an argument -- 'm'\n"
           exit
         end
@@ -231,38 +235,31 @@ class Arguments
   end
 end
 
-date = Date.today
 options = Options.new
 args = Arguments.new
 
-case  # オプションによるコマンドの分岐
-when options.has?(:y) == true && options.has?(:m) == true  # cal -y [year] -m [month]
-  date.year = options.get(:y)
-  date.month = options.get(:m)
-  cal = CalOneMonth.new(date)
-when options.has?(:y) == true  # cal -y / cal -y [year]
-  date.year = options.get(:y) unless options.get(:y).nil?  # 引数有りならyearに代入
-  cal = OneYearCalendar.new(date)
-when options.has?(:m) == true  # cal -m [month]
-  date = Date.new(date.year, options.get(:m), date.day)
-  cal = CalOneMonth.new(date)
-when options.has?(:h) == true  # cal -h
-  cal = CalOneMonth.new(date)
+case # オプションによるコマンドの分岐
+when options.has?(:y) && options.has?(:m) # cal -y [year] -m [month]
+  cal = CalOneMonth.new(options.get(:y), options.get(:m))
+when options.has?(:y) # cal -y / cal -y [year]
+  year = options.get(:y).nil? ? Date.today.year : options.get(:y) # 引数有りならyearに代入
+  cal = OneYearCalendar.new(year)
+when options.has?(:m) # cal -m [month]
+  cal = CalOneMonth.new(Date.today.year, options.get(:m))
+when options.has?(:h) # cal -h
+  cal = CalOneMonth.new(Date.today.year, Date.today.month)
   cal.delete_highlight
-when options.has?(:one) == true  # cal -1
-  cal = OneYearCalendar.new(date)
-when options.has?(:three) == true  # cal -3
-  date = date.prev_month
-  cal = ThreeMonthsCalendar.new(date)
-when args.has?(:m) == true  # cal [month] [year] 引数に月の値が存在すれば年・月が指定された事を意味する
-  date.year = args.get(:y)  # 引数から年を取得
-  date.month = args.get(:m)  # 引数から月を取得
-  cal = CalOneMonth.new(date)
-when args.has?(:y) == true  # cal [year]
-  date.year = args.get(:y)  # 引数から年を取得
-  cal = OneYearCalendar.new(date)
-else  # cal
-  cal = CalOneMonth.new(date)
+when options.has?(:one) # cal -1
+  cal = OneYearCalendar.new(Date.today.year)
+when options.has?(:three) # cal -3
+  date = Date.today.prev_month
+  cal = ThreeMonthsCalendar.new(date.year, date.month)
+when args.has?(:m) # cal [month] [year] 引数に月の値が存在すれば年・月が指定された事を意味する
+  cal = CalOneMonth.new(args.get(:y), args.get(:m))
+when args.has?(:y) # cal [year]
+  cal = OneYearCalendar.new(args.get(:y))
+else # cal
+  cal = CalOneMonth.new(Date.today.year, Date.today.month)
 end
 
 cal.print_calendar
