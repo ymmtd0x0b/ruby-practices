@@ -32,7 +32,7 @@ class OneYearCalendar
 
   def create_calendar
     current_month = Date.new(@date.year, 1, 1)
-    4.times.map do |n|
+    Array.new(4) do |n|
       ThreeMonthsCalendar.new(current_month.next_month(n * 3))
     end
   end
@@ -93,21 +93,48 @@ class CalOneMonth
     puts WDAY
     print @calendar.join("\n")
   end
+
+  def highlighting_today
+
+  end
+
+  def get_formatted_day(date)
+    day = (date.day / 10 == 0) ? " " + date.day.to_s : date.day.to_s # １桁の場合はスペースもハイライトの対象にする
+    if date == Date.today
+      " \e[47;30m" + day + "\e[0m"
+    else
+      day.rjust(DATE_CELL_WIDTH,' ')
+    end
+  end
+
+  def get_formatted_blank_space
+    (' ' * DATE_CELL_WIDTH)
+  end
+
+  def delete_highlight
+    @calendar.map! do |one_week|
+      if one_week.inspect.include?('\e[47;30m')
+        one_week.inspect.gsub(/"(.*)\\e\[47;30m(..)\\e\[0m(.*)"/, '\1\2\3')
+      else
+        one_week
+      end
+    end
+  end
   
   private
 
   def create_calendar
-    day = Date.new(@date.year, @date.month, 1)
-    Array.new(6, '').map do |one_week|
-      (0..6).each do |wday|
-        if wday == day.wday && @date.month == day.month
-          one_week += day.day.to_s.rjust(DATE_CELL_WIDTH,' ')
-          day = day.next_day
+    date = Date.new(@date.year, @date.month, 1)
+    Array.new(6, '').map do |week| # 1 month == 6 weeks
+      (0..6).each do |wday| # 1 week == 6 days (0~6,0:Sunday)
+        if wday == date.wday && @date.month == date.month
+          week += get_formatted_day(date)
+          date = date.next_day
         else
-          one_week += (' ' * DATE_CELL_WIDTH)
+          week += get_formatted_blank_space
         end
       end
-      one_week.slice(1..) # calコマンドの出力表示に合わせるために先頭の空白を削除
+      week.slice(1..) # calコマンドの出力表示に合わせるために先頭の空白を削除
     end
   end
 end
@@ -217,11 +244,11 @@ when options.has?(:y) == true  # cal -y / cal -y [year]
   date.year = options.get(:y) unless options.get(:y).nil?  # 引数有りならyearに代入
   cal = OneYearCalendar.new(date)
 when options.has?(:m) == true  # cal -m [month]
-  date.month = options.get(:m)
+  date = Date.new(date.year, options.get(:m), date.day)
   cal = CalOneMonth.new(date)
 when options.has?(:h) == true  # cal -h
-  # date.h = false
   cal = CalOneMonth.new(date)
+  cal.delete_highlight
 when options.has?(:one) == true  # cal -1
   cal = OneYearCalendar.new(date)
 when options.has?(:three) == true  # cal -3
