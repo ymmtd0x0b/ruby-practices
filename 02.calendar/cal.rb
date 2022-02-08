@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'date'
 require 'optparse'
 
@@ -14,7 +16,7 @@ class OneYearCalendar
 
   def create_months_line(three_months)
     months = three_months.three_months_calendar.map do |month|
-      month.month_title.sub(/ *([0-9]+月).*/, '\1').center(CalOneMonth::LINE_WIDTH)
+      month.month_title.sub(/ *([0-9]+月).*/, '\1').center(OneMonthCalendar::LINE_WIDTH)
     end
     "#{months.join(' ')}\n"
   end
@@ -47,11 +49,11 @@ class ThreeMonthsCalendar
   end
 
   def create_months_title
-    "#{@three_months_calendar.map(&:month_title).join(' ')}\n"
+    "#{@three_months_calendar.map(&:monthonth_title).join(' ')}\n"
   end
 
   def create_wdays_line
-    "#{Array.new(3) { CalOneMonth::WDAYS.join(' ') }.join('  ')}\n"
+    "#{Array.new(3) { OneMonthCalendar::WDAYS.join(' ') }.join('  ')}\n"
   end
 
   def create_dates_lines
@@ -60,7 +62,7 @@ class ThreeMonthsCalendar
         one_week_line = @three_months_calendar.map { |current_month| current_month.dates_table[week] }
         "#{one_week_line.join('  ')}\n"
       end
-    dates.join('')
+    dates.join
   end
 
   def print_calendar
@@ -75,17 +77,17 @@ class ThreeMonthsCalendar
     base_date = Date.new(year, month, 1)
     (0..2).map do |n|
       date = base_date.next_month(n)
-      CalOneMonth.new(date.year, date.month)
+      OneMonthCalendar.new(date.year, date.month)
     end
   end
 end
 
-class CalOneMonth
+class OneMonthCalendar
   attr_reader :month_title, :wdays, :dates_table
 
   DATE_CELL_WIDTH = 3
   LINE_WIDTH = 20
-  WDAYS = %w[日 月 火 水 木 金 土]
+  WDAYS = %w[日 月 火 水 木 金 土].freeze
   def initialize(year, month)
     @month_title = create_month_title(year, month)
     @wdays = WDAYS.join(' ')
@@ -99,7 +101,7 @@ class CalOneMonth
   end
 
   def create_formatted_day(date)
-    day = (date.day / 10).zero? ? date.day.to_s.rjust(1, ' ') : date.day.to_s # １桁の場合はスペースもハイライトの対象にする
+    day = (date.day / 10).zero? ? date.day.to_s.rjust(2, ' ') : date.day.to_s # １桁の場合はスペースもハイライトの対象にする
     if date == Date.today
       " \e[47;30m#{day}\e[0m"
     else
@@ -111,14 +113,15 @@ class CalOneMonth
     (' ' * DATE_CELL_WIDTH)
   end
 
-  def delete_highlight
-    @calendar.map! do |one_week|
+  def off_highlight
+    @dates_table.map! do |one_week|
       if one_week.inspect.include?('\e[47;30m')
         one_week.inspect.gsub(/"(.*)\\e\[47;30m(..)\\e\[0m(.*)"/, '\1\2\3')
       else
         one_week
       end
     end
+    self
   end
 
   private
@@ -143,54 +146,25 @@ class CalOneMonth
   end
 end
 
-class Options
+class CalendarOption
+  attr_reader :options
+
   def initialize
     @options = {}
     OptionParser.new do |opt|
-      opt.on('-y [value]', '--year [value]') do |v|
-        if v.nil? # オプションのみで引数が与えられなかった場合
-          @options[:y] = nil
-        elsif (v =~ /\A[0-9]+\z/) == 0 # 引数が数字でのみで構成させているかチェック
-          @options[:y] = v.to_i
-        else # エラー処理
-          print "cal: not a valid year #{v}\n"
-          exit
-        end
-      end 
-
-      opt.on('-m [value]', '--month [value]') do |value|
-        if value.nil?
-          print "cal: option requires an argument -- 'm'\n"
-          exit
-        end
-        v = value.to_i
-        if 1 <= v && v <= 12
-          @options[:m] = v
-        else
-          print "cal: #{value} is neither a month number (1..12) nor a name\n"
-          exit
-        end
-      end
-      opt.on('-h') { |v| @options[:h] = true }
-      opt.on('-1') { |v| @options[:one] = true }
-      opt.on('-3') { |v| @options[:three] = true }
+      opt.on('-y [value]', '--year [value]') { |value| @options[:year] = value }
+      opt.on('-m [value]', '--month [value]') { |value| @options[:month] = value }
+      opt.on('-h') { @options[:off_highlight] = true }
+      opt.on('-1') { @options[:one_month] = true }
+      opt.on('-3') { @options[:three_months] = true }
       begin
-       opt.parse!(ARGV)
-      rescue => e
-        print "cal: invalid option -- '#{e.message.gsub(/.+: -/,'')}'\n"
+        opt.parse!(ARGV)
+      rescue StandardError => e
+        print "cal: invalid option -- '#{e.message.gsub(/.+: -/, '')}'\n"
         exit
       end
-
-      if self.has?(:y) && self.has?(:m) # cal -y year -m month において、片方の引数が与えられていない場合はエラーとして終了
-        case
-        when self.get(:y).nil?
-          print "cal: option requires an argument -- 'y'\n"
-          exit
-        when self.get(:m).nil?
-          print "cal: option requires an argument -- 'm'\n"
-          exit
-        end
-      end
+      check_argument_only
+      check_option_value
     end
   end
 
@@ -198,68 +172,97 @@ class Options
     @options.include?(name)
   end
 
-  def get(name)
+  def get_value(name)
     @options[name]
   end
-end
 
-class Arguments
-  def initialize
-    @args = {}
-    if ARGV.size >= 3  # 引数３つ以上で処理の終了(引数異常)
+  private
+
+  def check_year_value
+    value = get_value(:year)
+    if value.nil?
+      @options[:year] = Date.today.year
+    elsif value.start_with?(/\A[0-9]+\z/)
+      @options[:year] = value.to_i
+    else # 引数が存在し、数字以外が含まれていればエラー
+      print "cal: not a valid year #{@options[:year]}\n"
       exit
-    elsif ARGV.size == 2  # 引数２つで月・年に代入
-      @args[:m] = check_month(ARGV[0])
-      @args[:y] = ARGV[1].to_i
-    elsif ARGV.size == 1  # 引数１つで年に代入
-      @args[:y] = ARGV[0].to_i
     end
   end
 
-  def check_month(v)
-    m = v.to_i  # 仮に文字が渡されていればココで０になる
-    if 1 <= m && m <= 12
-      m
+  def check_month_value
+    value = get_value(:month)
+    if value.nil?
+      print "cal: option requires an argument -- 'm'\n"
+      exit
+    end
+
+    num = value.to_i
+    if (1..12).cover?(num)
+      @options[:month] = num
     else
-      print "cal: #{v} is neither a month number (1..12) nor a name\n"
+      print "cal: #{value} is neither a month number (1..12) nor a name\n"
       exit
     end
   end
 
-  def has?(name)
-    @args.include?(name)
+  def check_year_and_month_with_value
+    if has?(:month) && get_value(:year).nil? # cal -y year -m month において、片方の引数が与えられていない場合はエラーとして終了
+      print "cal: option requires an argument -- 'y'\n"
+      exit
+    elsif has?(:year) && get_value(:month).nil?
+      print "cal: option requires an argument -- 'm'\n"
+      exit
+    end
   end
 
-  def get(name)
-    @args[name]
+  def check_option_value
+    case @options.keys.join
+    when 'year'
+      check_year_value
+    when 'month'
+      check_month_value
+    when 'yearmonth', 'monthyear'
+      check_year_value
+      check_month_value
+      check_year_and_month_with_value
+    end
+  end
+
+  def check_argument_only
+    return unless ARGV[0] =~ /\A[0-9]+\z/ || ARGV[1] =~ /\A[0-9]+\z/
+
+    case ARGV.size
+    when 2 # 引数２つで月・年に代入
+      @options[:month] = ARGV[0]
+      @options[:year] = ARGV[1]
+    when 1 # 引数１つで年に代入
+      @options[:year] = ARGV[0]
+    end
   end
 end
 
-options = Options.new
-args = Arguments.new
+option = CalendarOption.new
+today = Date.today
 
-case # オプションによるコマンドの分岐
-when options.has?(:y) && options.has?(:m) # cal -y [year] -m [month]
-  cal = CalOneMonth.new(options.get(:y), options.get(:m))
-when options.has?(:y) # cal -y / cal -y [year]
-  year = options.get(:y).nil? ? Date.today.year : options.get(:y) # 引数有りならyearに代入
-  cal = OneYearCalendar.new(year)
-when options.has?(:m) # cal -m [month]
-  cal = CalOneMonth.new(Date.today.year, options.get(:m))
-when options.has?(:h) # cal -h
-  cal = CalOneMonth.new(Date.today.year, Date.today.month)
-  cal.delete_highlight
-when options.has?(:one) # cal -1
-  cal = OneYearCalendar.new(Date.today.year)
-when options.has?(:three) # cal -3
-  date = Date.today.prev_month
-  cal = ThreeMonthsCalendar.new(date.year, date.month)
-when args.has?(:m) # cal [month] [year] 引数に月の値が存在すれば年・月が指定された事を意味する
-  cal = CalOneMonth.new(args.get(:y), args.get(:m))
-when args.has?(:y) # cal [year]
-  cal = OneYearCalendar.new(args.get(:y))
-else # cal
-  cal = CalOneMonth.new(Date.today.year, Date.today.month)
-end
+cal =
+  case option.options.keys.join(',')
+  when 'year'
+    OneYearCalendar.new(option.get_value(:year))
+  when 'month'
+    OneMonthCalendar.new(today.year, option.get_value(:month))
+  when 'year,month', 'month,year'
+    OneMonthCalendar.new(option.get_value(:year), option.get_value(:month))
+  when '1'
+    OneYearCalendar.new(today.year)
+  when '3'
+    ThreeMonthsCalendar.new(today.year, today.month)
+  when 'off_highlight'
+    OneMonthCalendar.new(today.year, today.month).off_highlight
+  when ''
+    OneMonthCalendar.new(today.year, today.month)
+  else
+    exit
+  end
 
 cal.print_calendar
