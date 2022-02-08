@@ -15,10 +15,10 @@ class OneYearCalendar
   end
 
   def create_months_line(three_months)
-    months = three_months.three_months_calendar.map do |month|
-      month.month_title.sub(/ *([0-9]+月).*/, '\1').center(OneMonthCalendar::LINE_WIDTH)
+    months_title = three_months.three_months_calendar.map do |one_month_calendar|
+      one_month_calendar.month_title.sub(/ *([0-9]+月).*/, '\1').center(OneMonthCalendar::LINE_WIDTH)
     end
-    "#{months.join(' ')}\n"
+    "#{months_title.join(' ')}\n"
   end
 
   def print_calendar
@@ -155,7 +155,7 @@ class CalendarOption
       opt.on('-y [value]', '--year [value]') { |value| @options[:year] = value }
       opt.on('-m [value]', '--month [value]') { |value| @options[:month] = value }
       opt.on('-h') { @options[:off_highlight] = true }
-      opt.on('-1') { @options[:one_month] = true }
+      opt.on('-1') { @options[:one_year] = true }
       opt.on('-3') { @options[:three_months] = true }
       begin
         opt.parse!(ARGV)
@@ -230,13 +230,11 @@ class CalendarOption
   end
 
   def check_argument_only
-    return unless ARGV[0] =~ /\A[0-9]+\z/ || ARGV[1] =~ /\A[0-9]+\z/
-
     case ARGV.size
-    when 2 # 引数２つで月・年に代入
+    when 2 # 引数２つで月・年の順で指定されたと見做す
       @options[:month] = ARGV[0]
       @options[:year] = ARGV[1]
-    when 1 # 引数１つで年に代入
+    when 1 # 引数１つで年のみ指定されたと見做す
       @options[:year] = ARGV[0]
     end
   end
@@ -253,7 +251,7 @@ cal =
     OneMonthCalendar.new(today.year, option.get_value(:month))
   when 'year,month', 'month,year'
     OneMonthCalendar.new(option.get_value(:year), option.get_value(:month))
-  when 'one_month'
+  when 'one_year'
     OneYearCalendar.new(today.year)
   when 'three_months'
     today = today.prev_month
