@@ -48,8 +48,10 @@ class ThreeMonthsCalendar
     @three_months_calendar = create_three_months_calendar(year, month)
   end
 
-  def create_months_title
-    "#{@three_months_calendar.map(&:monthonth_title).join(' ')}\n"
+  def print_calendar
+    print create_months_title
+    print create_wdays_line
+    print create_dates_lines
   end
 
   def create_wdays_line
@@ -65,13 +67,11 @@ class ThreeMonthsCalendar
     dates.join
   end
 
-  def print_calendar
-    print create_months_title
-    print create_wdays_line
-    print create_dates_lines
-  end
-
   private
+
+  def create_months_title
+    "#{@three_months_calendar.map(&:month_title).join(' ')}\n"
+  end
 
   def create_three_months_calendar(year, month)
     base_date = Date.new(year, month, 1)
@@ -100,19 +100,6 @@ class OneMonthCalendar
     print @dates_table.join("\n")
   end
 
-  def create_formatted_day(date)
-    day = (date.day / 10).zero? ? date.day.to_s.rjust(2, ' ') : date.day.to_s # １桁の場合はスペースもハイライトの対象にする
-    if date == Date.today
-      " \e[47;30m#{day}\e[0m"
-    else
-      day.rjust(DATE_CELL_WIDTH, ' ')
-    end
-  end
-
-  def create_formatted_blank_space
-    (' ' * DATE_CELL_WIDTH)
-  end
-
   def off_highlight
     @dates_table.map! do |one_week|
       if one_week.inspect.include?('\e[47;30m')
@@ -125,6 +112,19 @@ class OneMonthCalendar
   end
 
   private
+
+  def create_formatted_day(date)
+    day = (date.day / 10).zero? ? date.day.to_s.rjust(2, ' ') : date.day.to_s # １桁の場合はスペースもハイライトの対象にする
+    if date == Date.today
+      " \e[47;30m#{day}\e[0m"
+    else
+      day.rjust(DATE_CELL_WIDTH, ' ')
+    end
+  end
+
+  def create_formatted_blank_space
+    (' ' * DATE_CELL_WIDTH)
+  end
 
   def create_month_title(year, month)
     ("#{month}月 #{year}").center(LINE_WIDTH)
@@ -168,15 +168,15 @@ class CalendarOption
     end
   end
 
-  def has?(name)
-    @options.include?(name)
-  end
-
   def get_value(name)
     @options[name]
   end
 
   private
+
+  def has?(name)
+    @options.include?(name)
+  end
 
   def check_year_value
     value = get_value(:year)
@@ -253,9 +253,10 @@ cal =
     OneMonthCalendar.new(today.year, option.get_value(:month))
   when 'year,month', 'month,year'
     OneMonthCalendar.new(option.get_value(:year), option.get_value(:month))
-  when '1'
+  when 'one_month'
     OneYearCalendar.new(today.year)
-  when '3'
+  when 'three_months'
+    today = today.prev_month
     ThreeMonthsCalendar.new(today.year, today.month)
   when 'off_highlight'
     OneMonthCalendar.new(today.year, today.month).off_highlight
