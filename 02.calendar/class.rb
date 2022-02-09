@@ -8,22 +8,22 @@ class OneYearCalendar
   end
 
   def create_year_line
-    "#{@year.to_s.center(YEAR_LINE_WIDTH)}\n"
+    @year.to_s.center(YEAR_LINE_WIDTH)
   end
 
   def create_months_line(three_months)
     months_title = three_months.three_months_calendar.map do |one_month_calendar|
       one_month_calendar.month_title.sub(/ *([0-9]+月).*/, '\1').center(OneMonthCalendar::LINE_WIDTH)
     end
-    "#{months_title.join(' ')}\n"
+    months_title.join(' ')
   end
 
   def print_calendar
-    print create_year_line
+    puts create_year_line
     @one_year_calendar.map do |three_months|
-      print create_months_line(three_months)
-      print three_months.create_wdays_line
-      print three_months.create_dates_lines
+      puts create_months_line(three_months)
+      puts three_months.create_wdays_line
+      puts three_months.create_dates_lines
     end
   end
 
@@ -46,28 +46,28 @@ class ThreeMonthsCalendar
   end
 
   def print_calendar
-    print create_months_title
-    print create_wdays_line
-    print create_dates_lines
+    puts create_months_title
+    puts create_wdays_line
+    puts create_dates_lines
   end
 
   def create_wdays_line
-    "#{Array.new(3) { OneMonthCalendar::WDAYS.join(' ') }.join('  ')}\n"
+    Array.new(3) { OneMonthCalendar::WDAYS.join(' ') }.join('  ')
   end
 
   def create_dates_lines
     dates =
       (0..5).map do |week|
         one_week_line = @three_months_calendar.map { |current_month| current_month.dates_table[week] }
-        "#{one_week_line.join('  ')}\n"
+        one_week_line.join('  ')
       end
-    dates.join
+    dates.join("\n")
   end
 
   private
 
   def create_months_title
-    "#{@three_months_calendar.map(&:month_title).join(' ')}\n"
+    @three_months_calendar.map(&:month_title).join(' ')
   end
 
   def create_three_months_calendar(year, month)
