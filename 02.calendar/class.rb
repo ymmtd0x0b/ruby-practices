@@ -3,75 +3,64 @@
 class OneYearCalendar
   YEAR_LINE_WIDTH = 63
   def initialize(year)
-    @year = year
-    @one_year_calendar = create_one_year_calendar(year)
+    @data = {
+      year_title: Date.today.year.to_s.center(YEAR_LINE_WIDTH),
+      twelve_months: create(year)
+    }
   end
 
-  def create_year_line
-    @year.to_s.center(YEAR_LINE_WIDTH)
-  end
-
-  def create_months_line(three_months)
-    months_title = three_months.three_months_calendar.map do |one_month_calendar|
-      one_month_calendar.month_title.sub(/ *([0-9]+月).*/, '\1').center(OneMonthCalendar::LINE_WIDTH)
-    end
-    months_title.join(' ')
-  end
-
-  def print_calendar
-    puts create_year_line
-    @one_year_calendar.map do |three_months|
-      puts create_months_line(three_months)
-      puts three_months.create_wdays_line
-      puts three_months.create_dates_lines
-    end
+  def print
+    puts @data[:year_title]
+    @data[:twelve_months].each(&:print)
   end
 
   private
 
-  def create_one_year_calendar(year)
+  def create(year)
     january = Date.new(year, 1, 1)
     (0..3).map do |n|
       date = january.next_month(n * 3)
-      ThreeMonthsCalendar.new(date.year, date.month)
+      ThreeMonthsCalendar.new(date).delete_year_from_months_title
     end
   end
 end
 
 class ThreeMonthsCalendar
-  attr_reader :three_months_calendar
+  attr_reader :data
 
-  def initialize(year, month)
-    @three_months_calendar = create_three_months_calendar(year, month)
+  ONE_MONTH_WIDTH = 20
+  def initialize(date)
+    three_months = create(date)
+    @data = {
+      months_title: formatte_month_title_and_wdays(three_months, :month_title),
+      wdays: formatte_month_title_and_wdays(three_months, :wdays),
+      dates: formatte_dates(three_months)
+    }
   end
 
-  def print_calendar
-    puts create_months_title
-    puts create_wdays_line
-    puts create_dates_lines
+  def print
+    @data.each_value { |data| puts data }
   end
 
-  def create_wdays_line
-    Array.new(3) { OneMonthCalendar::WDAYS.join(' ') }.join('  ')
-  end
-
-  def create_dates_lines
-    dates =
-      (0..5).map do |week|
-        one_week_line = @three_months_calendar.map { |current_month| current_month.dates_table[week] }
-        one_week_line.join('  ')
-      end
-    dates.join("\n")
+  def delete_year_from_months_title
+    @data[:months_title] = @data[:months_title].scan(/[0-9]+月/).map { |month| month.center(ONE_MONTH_WIDTH) }.join(' ')
+    self
   end
 
   private
 
-  def create_months_title
-    @three_months_calendar.map(&:month_title).join(' ')
+  def formatte_month_title_and_wdays(three_months, target)
+    three_months.map { |month| month.data[target] }.join(' ')
   end
 
-  def create_three_months_calendar(year, month)
-    base_date = Date.new(year, month, 1)
+  def formatte_dates(three_months)
+    (0..5).map do |week|
+      three_months.map { |month| month.data[:dates][week] }.join('  ')
+    end.join("\n")
+  end
+
+  def create(date)
+    base_date = Date.new(date.year, date.month, 1)
     (0..2).map do |n|
       date = base_date.next_month(n)
       OneMonthCalendar.new(date.year, date.month)
@@ -80,25 +69,21 @@ class ThreeMonthsCalendar
 end
 
 class OneMonthCalendar
-  attr_reader :month_title, :wdays, :dates_table
+  attr_reader :data
 
   DATE_CELL_WIDTH = 3
   LINE_WIDTH = 20
   WDAYS = %w[日 月 火 水 木 金 土].freeze
   def initialize(year, month)
-    @month_title = create_month_title(year, month)
-    @wdays = WDAYS.join(' ')
-    @dates_table = create_dates_table(year, month)
-  end
-
-  def print_calendar
-    puts @month_title
-    puts @wdays
-    puts @dates_table.join("\n")
+    @data = {
+      month_title: ("#{month}月 #{year}").center(LINE_WIDTH),
+      wdays: "#{WDAYS.join(' ')} ",
+      dates: create_dates(year, month)
+    }
   end
 
   def off_highlight
-    @dates_table.map! do |one_week|
+    @data[:dates].map! do |one_week|
       if one_week.inspect.include?('\e[47;30m')
         one_week.inspect.gsub(/"(.*)\\e\[47;30m(..)\\e\[0m(.*)"/, '\1\2\3')
       else
@@ -108,34 +93,34 @@ class OneMonthCalendar
     self
   end
 
+  def print
+    @data.each_value { |data| puts data }
+  end
+
   private
 
-  def create_formatted_day(date)
+  def formatted_day_for_table(date)
     day = (date.day / 10).zero? ? date.day.to_s.rjust(2, ' ') : date.day.to_s # １桁の場合はスペースもハイライトの対象にする
-    if date == Date.today
+    if date == Date.today # コマンド実行日と同じならハイライトにする
       " \e[47;30m#{day}\e[0m"
     else
       day.rjust(DATE_CELL_WIDTH, ' ')
     end
   end
 
-  def create_formatted_blank_space
-    (' ' * DATE_CELL_WIDTH)
+  def formatted_blank_space_for_table
+    ' ' * DATE_CELL_WIDTH
   end
 
-  def create_month_title(year, month)
-    ("#{month}月 #{year}").center(LINE_WIDTH)
-  end
-
-  def create_dates_table(year, month)
-    date = Date.new(year, month, 1)
+  def create_dates(year, month)
+    current_date = Date.new(year, month, 1)
     Array.new(6, '').map do |week| # 1 month == 6 weeks
-      (0..6).each do |wday| # 1 week == 6 days (0~6,0:Sunday)
-        if wday == date.wday && month == date.month
-          week += create_formatted_day(date)
-          date = date.next_day
+      (0..6).each do |wday| # 1 week == 7 days (0~6,0:Sunday)
+        if wday == current_date.wday && month == current_date.month
+          week += formatted_day_for_table(current_date)
+          current_date = current_date.next_day
         else
-          week += create_formatted_blank_space
+          week += formatted_blank_space_for_table
         end
       end
       week.slice(1..) # calコマンドの出力表示に合わせるために先頭の空白を削除
@@ -160,7 +145,7 @@ class CalendarOption
         print "cal: invalid option -- '#{e.message.gsub(/.+: -/, '')}'\n"
         exit
       end
-      check_argument_only
+      check_argument
       check_option_value
     end
   end
@@ -226,7 +211,7 @@ class CalendarOption
     end
   end
 
-  def check_argument_only
+  def check_argument
     case ARGV.size
     when 2 # 引数２つで月・年の順で指定されたと見做す
       @options[:month] = ARGV[0]
