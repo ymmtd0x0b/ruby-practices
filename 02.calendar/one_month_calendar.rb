@@ -1,21 +1,19 @@
 # frozen_string_literal: true
 
 class OneMonthCalendar
-  attr_reader :data
+  attr_reader :month_title, :wdays, :dates
 
   DATE_CELL_WIDTH = 3
   LINE_WIDTH = 20
   WDAYS = %w[日 月 火 水 木 金 土].freeze
   def initialize(year, month)
-    @data = {
-      month_title: ("#{month}月 #{year}").center(LINE_WIDTH),
-      wdays: "#{WDAYS.join(' ')} ",
-      dates: create_dates(year, month)
-    }
+    @month_title = ("#{month}月 #{year}").center(LINE_WIDTH)
+    @wdays = "#{WDAYS.join(' ')} "
+    @dates = create_dates(year, month)
   end
 
   def off_highlight
-    @data[:dates].map! do |one_week|
+    @dates.map! do |one_week|
       if one_week.inspect.include?('\e[47;30m')
         one_week.inspect.gsub(/"(.*)\\e\[47;30m(..)\\e\[0m(.*)"/, '\1\2\3')
       else
@@ -26,7 +24,9 @@ class OneMonthCalendar
   end
 
   def print
-    @data.each_value { |data| puts data }
+    puts @month_title
+    puts @wdays
+    puts @dates
   end
 
   private

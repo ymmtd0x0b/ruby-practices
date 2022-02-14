@@ -3,15 +3,13 @@
 class OneYearCalendar
   YEAR_LINE_WIDTH = 63
   def initialize(year)
-    @data = {
-      year_title: Date.today.year.to_s.center(YEAR_LINE_WIDTH),
-      twelve_months: create(year)
-    }
+    @year_title = year.to_s.center(YEAR_LINE_WIDTH)
+    @months = create(year)
   end
 
   def print
-    puts @data[:year_title]
-    @data[:twelve_months].each(&:print)
+    puts @year_title
+    @months.each(&:print)
   end
 
   private

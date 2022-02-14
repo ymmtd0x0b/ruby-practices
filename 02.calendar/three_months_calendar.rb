@@ -1,36 +1,39 @@
 # frozen_string_literal: true
 
 class ThreeMonthsCalendar
-  attr_reader :data
 
   ONE_MONTH_WIDTH = 20
   def initialize(date)
     three_months = create(date)
-    @data = {
-      months_title: formatte_month_title_and_wdays(three_months, :month_title),
-      wdays: formatte_month_title_and_wdays(three_months, :wdays),
-      dates: formatte_dates(three_months)
-    }
+    @months_title = formatte_month_title(three_months)
+    @wdays = formatte_wdays(three_months)
+    @dates = formatte_dates(three_months)
   end
 
   def print
-    @data.each_value { |data| puts data }
+    puts @months_title
+    puts @wdays
+    puts @dates
   end
 
   def delete_year_from_months_title
-    @data[:months_title] = @data[:months_title].scan(/[0-9]+月/).map { |month| month.center(ONE_MONTH_WIDTH) }.join(' ')
+    @months_title = @months_title.scan(/[0-9]+月/).map { |month| month.center(ONE_MONTH_WIDTH) }.join(' ')
     self
   end
 
   private
 
-  def formatte_month_title_and_wdays(three_months, target)
-    three_months.map { |month| month.data[target] }.join(' ')
+  def formatte_month_title(three_months)
+    three_months.map { |month| month.month_title }.join(' ')
+  end
+
+  def formatte_wdays(three_months)
+    three_months.map { |month| month.wdays }.join(' ')
   end
 
   def formatte_dates(three_months)
     (0..5).map do |week|
-      three_months.map { |month| month.data[:dates][week] }.join('  ')
+      three_months.map { |month| month.dates[week] }.join('  ')
     end.join("\n")
   end
 
