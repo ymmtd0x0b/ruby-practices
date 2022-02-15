@@ -11,7 +11,7 @@ option = CalendarOption.new
 
 cal =
   if option.off_highlight
-    OneMonthCalendar.new(Date.today.year, Date.today.month).off_highlight
+    OneMonthCalendar.new(Date.today.year, Date.today.month, highlight: false)
   elsif option.three_months
     prev_month = Date.today.prev_month
     ThreeMonthsCalendar.new(prev_month)
@@ -19,8 +19,8 @@ cal =
     OneMonthCalendar.new(option.year, option.month)
   elsif option.month
     OneMonthCalendar.new(Date.today.year, option.month)
-  elsif option.year || option.one_year
-    OneYearCalendar.new(Date.today.year)
+  elsif option.year
+    OneYearCalendar.new(option.year)
   else
     OneMonthCalendar.new(Date.today.year, Date.today.month)
   end

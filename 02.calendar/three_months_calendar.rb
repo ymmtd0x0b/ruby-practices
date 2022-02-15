@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class ThreeMonthsCalendar
-
   ONE_MONTH_WIDTH = 20
   def initialize(date)
     three_months = create(date)
@@ -24,11 +23,11 @@ class ThreeMonthsCalendar
   private
 
   def formatte_month_title(three_months)
-    three_months.map { |month| month.month_title }.join(' ')
+    three_months.map(&:month_title).join(' ')
   end
 
   def formatte_wdays(three_months)
-    three_months.map { |month| month.wdays }.join(' ')
+    three_months.map(&:wdays).join(' ')
   end
 
   def formatte_dates(three_months)
