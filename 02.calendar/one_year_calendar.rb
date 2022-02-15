@@ -4,7 +4,7 @@ class OneYearCalendar
   YEAR_LINE_WIDTH = 63
   def initialize(year)
     @year_title = year.to_s.center(YEAR_LINE_WIDTH)
-    @months = create(year)
+    @months = months(year)
   end
 
   def print
@@ -14,7 +14,7 @@ class OneYearCalendar
 
   private
 
-  def create(year)
+  def months(year)
     january = Date.new(year, 1, 1)
     (0..3).map do |n|
       date = january.next_month(n * 3)

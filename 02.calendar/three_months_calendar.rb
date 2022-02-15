@@ -3,7 +3,7 @@
 class ThreeMonthsCalendar
   ONE_MONTH_WIDTH = 20
   def initialize(date)
-    three_months = create(date)
+    three_months = months(date)
     @months_title = formatte_month_title(three_months)
     @wdays = formatte_wdays(three_months)
     @dates = formatte_dates(three_months)
@@ -36,7 +36,7 @@ class ThreeMonthsCalendar
     end.join("\n")
   end
 
-  def create(date)
+  def months(date)
     base_date = Date.new(date.year, date.month, 1)
     (0..2).map do |n|
       date = base_date.next_month(n)
