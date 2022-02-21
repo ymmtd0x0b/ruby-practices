@@ -14,7 +14,7 @@ def format_for_print(files)
 end
 
 def rows(files)
-  files.length / COLUMNS
+  files.count / COLUMNS
 end
 
 def file_names_to_the_same_length(files_arrays)
