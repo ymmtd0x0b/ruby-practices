@@ -3,7 +3,7 @@
 COLUMNS = 3
 
 def main
-  files = Dir.each_child(Dir.pwd).filter { |file| file.match?(/^[^.]/) }.sort
+  files = Dir.glob("*")
   (COLUMNS - files.length % COLUMNS).times { files << '' } unless (files.length % COLUMNS).zero? # 後の処理で転置(transposeメソッド)出来るように空の要素を増やす
   puts format_for_print(files)
 end
