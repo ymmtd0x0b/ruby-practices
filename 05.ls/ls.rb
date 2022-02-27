@@ -4,8 +4,14 @@ COLUMNS = 3
 
 def main
   files = Dir.glob("*")
-  (COLUMNS - files.length % COLUMNS).times { files << '' } unless (files.length % COLUMNS).zero? # 後の処理で転置(transposeメソッド)出来るように空の要素を増やす
+  files = matrix(files) # 後の処理で転置(transposeメソッド)出来るように空の要素を増やして行列の形にする
   puts format_for_print(files)
+end
+
+def matrix(files)
+  mod = files.count % COLUMNS
+  ( COLUMNS - mod ).times { files << '' } unless mod.zero?
+  files
 end
 
 def format_for_print(files)
