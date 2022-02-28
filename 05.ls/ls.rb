@@ -1,16 +1,31 @@
 # frozen_string_literal: true
 
+require 'optparse'
+
 COLUMNS = 3
 
 def main
-  files = Dir.glob("*")
+  files = self.files
   files = matrix(files) # 後の処理で転置(transposeメソッド)出来るように空の要素を増やして行列の形にする
   puts format_for_print(files)
 end
 
+def files
+  opt = OptionParser.new
+  params = {}
+  opt.on('-a') { |value| value }
+  opt.parse!(ARGV, into: params)
+
+  if params.key?(:a)
+    Dir.entries('.').sort
+  else
+    Dir.glob('*').sort
+  end
+end
+
 def matrix(files)
   mod = files.count % COLUMNS
-  ( COLUMNS - mod ).times { files << '' } unless mod.zero?
+  (COLUMNS - mod).times { files << '' } unless mod.zero?
   files
 end
 
