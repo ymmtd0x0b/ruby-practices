@@ -6,7 +6,7 @@ COLUMNS = 3
 
 def main
   files = self.files
-  files = matrix(files) # 後の処理で転置(transposeメソッド)出来るように空の要素を増やして行列の形にする
+  files = to_matrix(files) # 後の処理で転置(transposeメソッド)出来るように空の要素を増やして行列の形にする
   puts format_for_print(files)
 end
 
@@ -23,7 +23,7 @@ def files
   end
 end
 
-def matrix(files)
+def to_matrix(files)
   mod = files.count % COLUMNS
   (COLUMNS - mod).times { files << '' } unless mod.zero?
   files
