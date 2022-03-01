@@ -17,9 +17,9 @@ def files
   opt.parse!(ARGV, into: params)
 
   if params.key?(:a)
-    Dir.entries('.').sort
+    Dir.glob('*', File::FNM_DOTMATCH)
   else
-    Dir.glob('*').sort
+    Dir.glob('*')
   end
 end
 
