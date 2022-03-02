@@ -15,12 +15,8 @@ def files
   params = {}
   opt.on('-a') { |value| value }
   opt.parse!(ARGV, into: params)
-
-  if params.key?(:a)
-    Dir.glob('*', File::FNM_DOTMATCH)
-  else
-    Dir.glob('*')
-  end
+  flag = params.key?(:a) ? File::FNM_DOTMATCH : 0
+  Dir.glob('*', flag)
 end
 
 def to_matrix(files)
