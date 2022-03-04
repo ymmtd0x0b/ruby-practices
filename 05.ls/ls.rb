@@ -14,9 +14,11 @@ def files
   opt = OptionParser.new
   params = {}
   opt.on('-a') { |value| value }
+  opt.on('-r') { |value| value }
   opt.parse!(ARGV, into: params)
   flag = params.key?(:a) ? File::FNM_DOTMATCH : 0
-  Dir.glob('*', flag)
+  files = Dir.glob('*', flag)
+  params.key?(:r) ? files.reverse : files
 end
 
 def to_matrix(files)
