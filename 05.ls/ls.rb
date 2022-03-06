@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'optparse'
+require 'etc'
 
 COLUMNS = 3
 
@@ -15,10 +16,49 @@ def files
   params = {}
   opt.on('-a') { |value| value }
   opt.on('-r') { |value| value }
+  opt.on('-l') { |value| value }
   opt.parse!(ARGV, into: params)
   flag = params.key?(:a) ? File::FNM_DOTMATCH : 0
   files = Dir.glob('*', flag)
   params.key?(:r) ? files.reverse : files
+  params.key?(:l) ? l_option(files) : files
+end
+
+def l_option(files)
+  # p file_type(file.ftype) + permission(664).join
+  files.each do |f|
+    file = File::Stat.new(f)
+    print "#{file_type(file.ftype) + permission(file.mode)} #{file.nlink} #{Etc.getpwuid(file.uid).name} #{Etc.getgrgid(file.gid).name} #{file.size} #{file.mtime.strftime("%_m月 %d %H:%M")} #{f}\n"
+  end
+  # print files.join("\n")
+  exit
+end
+
+def file_type(type)
+  if ['directory', 'link'].include?(type)
+    type[0]
+  else '-'
+  end
+end
+
+def permission(file_mode)
+  mode = file_mode.to_s(8)[-3..].to_i
+  mode.digits.reverse.map do |digit|
+    str = ''
+    [4, 2, 1].each do |permission|
+      if digit >= 4
+        str += 'r'
+      elsif digit >= 2
+        str += 'w'
+      elsif digit >= 1
+        str += 'x'
+      else
+        str += '-'
+      end
+      digit -= permission
+    end
+    str
+  end.join
 end
 
 def to_matrix(files)
