@@ -33,18 +33,6 @@ def details(files)
   sum_block_size + files_status.join("\n")
 end
 
-def status_list(fname, fstatus, digits)
-  [
-    type(fstatus) + permission(fstatus),
-    fstatus.nlink,
-    Etc.getpwuid(fstatus.uid).name.rjust(digits[0]),
-    Etc.getgrgid(fstatus.gid).name.rjust(digits[1]),
-    fstatus.size.to_s.rjust(digits[2]),
-    fstatus.mtime.strftime('%_m月 %_d %H:%M'),
-    format_file_name(fstatus.ftype, fname)
-  ].join(' ')
-end
-
 def digits(files)
   users = []
   groups = []
@@ -56,6 +44,18 @@ def digits(files)
     files_size << file.size.to_s
   end
   max_characters([users, groups, files_size])
+end
+
+def status_list(fname, fstatus, digits)
+  [
+    type(fstatus) + permission(fstatus),
+    fstatus.nlink,
+    Etc.getpwuid(fstatus.uid).name.rjust(digits[0]),
+    Etc.getgrgid(fstatus.gid).name.rjust(digits[1]),
+    fstatus.size.to_s.rjust(digits[2]),
+    fstatus.mtime.strftime('%_m月 %_d %H:%M'),
+    format_file_name(fstatus.ftype, fname)
+  ].join(' ')
 end
 
 def type(fstatus)
