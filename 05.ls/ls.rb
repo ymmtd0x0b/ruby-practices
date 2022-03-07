@@ -4,87 +4,115 @@ require 'optparse'
 require 'etc'
 
 COLUMNS = 3
+PERMISSIONS = { r: 4, w: 2, x: 1 }.freeze
+BLOCK_SIZE = 1024
 
 def main
   files = self.files
-  files = to_matrix(files) # 後の処理で転置(transposeメソッド)出来るように空の要素を増やして行列の形にする
-  puts format_for_print(files)
+  puts files
 end
 
 def files
-  opt = OptionParser.new
-  params = {}
-  opt.on('-a') { |value| value }
-  opt.on('-r') { |value| value }
-  opt.on('-l') { |value| value }
-  opt.parse!(ARGV, into: params)
-  flag = params.key?(:a) ? File::FNM_DOTMATCH : 0
-  files = Dir.glob('*', flag)
-  params.key?(:r) ? files.reverse : files
-  params.key?(:l) ? l_option(files) : files
+  options = ARGV.getopts('arl')
+  hidden_files_flag = options['a'] ? File::FNM_DOTMATCH : 0
+  files = Dir.glob('*', hidden_files_flag)
+  files = options['r'] ? files.reverse : files
+  options['l'] ? details(files) : summaries(files)
 end
 
-def l_option(files)
-  # p file_type(file.ftype) + permission(664).join
-  files.each do |f|
-    file = File::Stat.new(f)
-    print "#{file_type(file.ftype) + permission(file.mode)} #{file.nlink} #{Etc.getpwuid(file.uid).name} #{Etc.getgrgid(file.gid).name} #{file.size} #{file.mtime.strftime("%_m月 %d %H:%M")} #{f}\n"
-  end
-  # print files.join("\n")
-  exit
-end
-
-def file_type(type)
-  if ['directory', 'link'].include?(type)
-    type[0]
-  else '-'
-  end
-end
-
-def permission(file_mode)
-  mode = file_mode.to_s(8)[-3..].to_i
-  mode.digits.reverse.map do |digit|
-    str = ''
-    [4, 2, 1].each do |permission|
-      if digit >= 4
-        str += 'r'
-      elsif digit >= 2
-        str += 'w'
-      elsif digit >= 1
-        str += 'x'
-      else
-        str += '-'
-      end
-      digit -= permission
+def details(files)
+  digits = self.digits(files) # ユーザー名, グループ名, ファイルサイズで桁合わせを行う前準備
+  sum_files_size = 0
+  files_status =
+    files.map do |file_name|
+      file = File.lstat(file_name)
+      sum_files_size += file.size
+      [
+        type(file) + permission(file),
+        file.nlink,
+        Etc.getpwuid(file.uid).name.rjust(digits[0]),
+        Etc.getgrgid(file.gid).name.rjust(digits[1]),
+        file.size.to_s.rjust(digits[2]),
+        file.mtime.strftime('%_m月 %_d %H:%M'),
+        format_file_name(file.ftype, file_name)
+      ].join(' ')
     end
-    str
+  sum_block_size = "合計 #{sum_files_size / BLOCK_SIZE}\n"
+  sum_block_size + files_status.join("\n")
+end
+
+def digits(files)
+  users = []
+  groups = []
+  files_size = []
+  files.each do |file_name|
+    file = File.lstat(file_name)
+    users << Etc.getpwuid(file.uid).name
+    groups << Etc.getgrgid(file.gid).name
+    files_size << file.size.to_s
+  end
+  max_characters([users, groups, files_size])
+end
+
+def type(file)
+  if %w[directory link].include?(file.ftype)
+    file.ftype[0]
+  else
+    '-'
+  end
+end
+
+def permission(file)
+  authories = file.mode.to_s(8).chars.map(&:to_i)[-3..]
+  authories.map do |authory|
+    PERMISSIONS.map do |permission|
+      if authory >= permission[1]
+        authory -= permission[1]
+        permission[0].to_s
+      else
+        '-'
+      end
+    end
   end.join
 end
 
-def to_matrix(files)
+def format_file_name(type, name)
+  if type == 'link'
+    "#{name} -> #{File.readlink("./#{name}")}"
+  else
+    name
+  end
+end
+
+def summaries(files)
+  files = add_elements(files) # 後の処理で転置(transposeメソッド)出来るように空の要素を増やす
+  transpose(files)
+end
+
+def add_elements(files)
   mod = files.count % COLUMNS
   (COLUMNS - mod).times { files << '' } unless mod.zero?
   files
 end
 
-def format_for_print(files)
+def transpose(files)
   files_arrays = files.each_slice(rows(files)) # ROWS * COLUMNS の疑似行列(2次元配列)を作成
-  file_names_to_the_same_length(files_arrays).transpose.map { |row| row.join('  ') }.join("\n")
+  file_name_align(files_arrays).transpose.map { |row| row.join('  ') }.join("\n")
 end
 
 def rows(files)
   files.count / COLUMNS
 end
 
-def file_names_to_the_same_length(files_arrays)
-  digits = max_characters_in_columns(files_arrays) # 各列の最長ファイル名を固定幅として取得
+def file_name_align(files_arrays)
+  digits = max_characters(files_arrays) # 各列の最長ファイル名を固定幅として取得
   files_arrays.map.with_index do |row, index|
     row.map { |file_name| file_name.ljust(digits[index]) }
   end
 end
 
 # 配列の<行>は転置後に<列>となるためメソッド名をcolumnsとしている
-def max_characters_in_columns(files_arrays)
+def max_characters(files_arrays)
   files_arrays.map { |column| column.max_by(&:length).length }
 end
 
