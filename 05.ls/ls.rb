@@ -24,21 +24,25 @@ def details(files)
   digits = self.digits(files) # ユーザー名, グループ名, ファイルサイズで桁合わせを行う前準備
   sum_files_size = 0
   files_status =
-    files.map do |file_name|
-      file = File.lstat(file_name)
-      sum_files_size += file.size
-      [
-        type(file) + permission(file),
-        file.nlink,
-        Etc.getpwuid(file.uid).name.rjust(digits[0]),
-        Etc.getgrgid(file.gid).name.rjust(digits[1]),
-        file.size.to_s.rjust(digits[2]),
-        file.mtime.strftime('%_m月 %_d %H:%M'),
-        format_file_name(file.ftype, file_name)
-      ].join(' ')
+    files.map do |fname|
+      fstatus = File.lstat(fname)
+      sum_files_size += fstatus.size
+      status_list(fname, fstatus, digits)
     end
   sum_block_size = "合計 #{sum_files_size / BLOCK_SIZE}\n"
   sum_block_size + files_status.join("\n")
+end
+
+def status_list(fname, fstatus, digits)
+  [
+    type(fstatus) + permission(fstatus),
+    fstatus.nlink,
+    Etc.getpwuid(fstatus.uid).name.rjust(digits[0]),
+    Etc.getgrgid(fstatus.gid).name.rjust(digits[1]),
+    fstatus.size.to_s.rjust(digits[2]),
+    fstatus.mtime.strftime('%_m月 %_d %H:%M'),
+    format_file_name(fstatus.ftype, fname)
+  ].join(' ')
 end
 
 def digits(files)
@@ -54,16 +58,16 @@ def digits(files)
   max_characters([users, groups, files_size])
 end
 
-def type(file)
-  if %w[directory link].include?(file.ftype)
-    file.ftype[0]
+def type(fstatus)
+  if %w[directory link].include?(fstatus.ftype)
+    fstatus.ftype[0]
   else
     '-'
   end
 end
 
-def permission(file)
-  authories = file.mode.to_s(8).chars.map(&:to_i)[-3..]
+def permission(fstatus)
+  authories = fstatus.mode.to_s(8).chars.map(&:to_i)[-3..]
   authories.map do |authory|
     PERMISSIONS.map do |permission|
       if authory >= permission[1]
