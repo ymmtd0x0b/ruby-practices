@@ -22,13 +22,12 @@ end
 
 def details(files)
   digits = self.digits(files) # ユーザー名, グループ名, ファイルサイズで桁合わせを行う前準備
-  sum_files_size = 0
   files_status =
     files.map do |fname|
       fstatus = File.lstat(fname)
-      sum_files_size += fstatus.size
       status_list(fname, fstatus, digits)
     end
+  sum_files_size = files.map { |fname| File.lstat(fname) }.sum(&:size)
   sum_block_size = "合計 #{sum_files_size / BLOCK_SIZE}\n"
   sum_block_size + files_status.join("\n")
 end
