@@ -115,9 +115,8 @@ def file_name_align(files_arrays)
   end
 end
 
-# 配列の<行>は転置後に<列>となるためメソッド名をcolumnsとしている
 def max_characters(files_arrays)
-  files_arrays.map { |column| column.max_by(&:length).length }
+  files_arrays.map { |array| array.max_by(&:length).length }
 end
 
 main
