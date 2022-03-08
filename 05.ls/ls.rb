@@ -58,11 +58,7 @@ def status_list(fname, fstatus, digits)
 end
 
 def type(fstatus)
-  if %w[directory link].include?(fstatus.ftype)
-    fstatus.ftype[0]
-  else
-    '-'
-  end
+  %w[directory link].include?(fstatus.ftype) ? fstatus.ftype[0] : '-'
 end
 
 def permission(fstatus)
@@ -80,11 +76,7 @@ def permission(fstatus)
 end
 
 def format_file_name(type, name)
-  if type == 'link'
-    "#{name} -> #{File.readlink("./#{name}")}"
-  else
-    name
-  end
+  type == 'link' ? "#{name} -> #{File.readlink("./#{name}")}" : name
 end
 
 def summaries(files)
