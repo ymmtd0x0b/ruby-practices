@@ -36,7 +36,7 @@ def digits(files)
   users = []
   groups = []
   files_size = []
-  files.each do |file_name|
+  files.each do |file_name| # max_charactersメソッドの仕様上、ここでmapメソッドを利用すると正しい結果が得られないので注意
     file = File.lstat(file_name)
     users << Etc.getpwuid(file.uid).name
     groups << Etc.getgrgid(file.gid).name
