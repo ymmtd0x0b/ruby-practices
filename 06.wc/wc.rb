@@ -3,6 +3,7 @@
 DIGIT = { stdin: 7, argv: 1 }.freeze
 
 def main
+  option
   ARGV.empty? ? stdin : argv
 end
 
@@ -13,7 +14,7 @@ end
 
 def argv
   if ARGV.size.eql?(1)
-    lws = lines_words_size(File.readlines(arg), arg) # lws = lines / words / size
+    lws = lines_words_size(File.readlines(ARGV[0]), ARGV[0]) # lws = lines / words / size
     digit = digit(lws, :argv)
     display(lws, digit)
   else
