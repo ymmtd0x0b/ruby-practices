@@ -7,46 +7,56 @@
 
 #  - 標準入力：常に文字列(ファイルを開いた状態)として処理する
 
-DEFAULT_DIGIT_IN_STDIN = 7
-DEFAULT_DIGIT_IN_ARGV = 1
+DIGIT = {stdin: 7, argv: 1}
 
 def main
   ARGV.empty? ? stdin : argv
 end
 
 def stdin
-  result = wc(STDIN.readlines, '')
-  digit = DEFAULT_DIGIT_IN_STDIN
-  sum = 0
-  result.each do |key, value|
-    next if key.eql?(:name)
-    digit = value.digits.size if digit < value.digits.size
-  end
-  display(result, digit)
+  result = lines_words_size(STDIN.readlines, '')
+  display(result, digit(result, :stdin))
 end
 
 def argv
-  files =
-    ARGV.map do |arg|
-      wc(File.readlines(arg), arg)
-    end
+  if ARGV.size.eql?(1)
+    lws = lines_words_size(File.readlines(arg), arg) # lws = lines / words / size
+    digit = digit(lws, :argv)
+    display(lws, digit)
+  else
+    lws_list =
+      ARGV.map do |arg|
+        lines_words_size(File.readlines(arg), arg)
+      end
+    sums = sums(lws_list)
+    digit = digit(sums, :argv)
+    lws_list.each { |lws| display(lws, digit) }
+    display(sums, digit)
+  end
+end
 
-  digit = DEFAULT_DIGIT_IN_ARGV
+def sums(files)
   sum = {name: "合計", lines: 0, words: 0, size: 0}
   files.each do |file|
     file.each do |key, value|
       next if key.eql?(:name)
       sum[key] += value
-      digit = sum[key].digits.size if digit < sum[key].digits.size
     end
   end
-
-  files.each { |file| display(file, digit) }
-  printf("%#{digit}s %#{digit}s %#{digit}s %s\n", sum[:lines], sum[:words], sum[:size], sum[:name]) if ARGV.size >= 2
-
+  sum
 end
 
-def wc(contents, arg)
+# 出力時の各列の桁は各列(行数/単語数/ファイルサイズ)の中で最も大きい桁数で揃える
+def digit(file, process_type)
+  digit = DIGIT[process_type]
+  file.each do |key, value|
+    next if key.eql?(:name)
+    digit = value.digits.size if digit < value.digits.size
+  end
+  digit
+end
+
+def lines_words_size(contents, arg)
   {
     name: arg,
     lines: contents.count,
