@@ -1,20 +1,13 @@
-# 仕様
+# frozen_string_literal: true
 
-# 引数と標準入力が同時に渡された場合は引数アリが優先される
-
-#  - 引数：まずファイルを開けるか試みる
-#         ➜ ファイルが無ければそのまま終了
-
-#  - 標準入力：常に文字列(ファイルを開いた状態)として処理する
-
-DIGIT = {stdin: 7, argv: 1}
+DIGIT = { stdin: 7, argv: 1 }.freeze
 
 def main
   ARGV.empty? ? stdin : argv
 end
 
 def stdin
-  result = lines_words_size(STDIN.readlines, '')
+  result = lines_words_size($stdin.readlines, '')
   display(result, digit(result, :stdin))
 end
 
@@ -30,16 +23,17 @@ def argv
       end
     sums = sums(lws_list)
     digit = digit(sums, :argv)
-    lws_list.each { |lws| display(lws, digit) }
+    lws_list.each { |element| display(element, digit) }
     display(sums, digit)
   end
 end
 
-def sums(files)
-  sum = {name: "合計", lines: 0, words: 0, size: 0}
-  files.each do |file|
-    file.each do |key, value|
+def sums(lws_list)
+  sum = { name: '合計', lines: 0, words: 0, size: 0 }
+  lws_list.each do |lws|
+    lws.each do |key, value|
       next if key.eql?(:name)
+
       sum[key] += value
     end
   end
@@ -51,6 +45,7 @@ def digit(file, process_type)
   digit = DIGIT[process_type]
   file.each do |key, value|
     next if key.eql?(:name)
+
     digit = value.digits.size if digit < value.digits.size
   end
   digit
