@@ -1,31 +1,29 @@
 # frozen_string_literal: true
 
+require 'optparse'
+
 DIGIT = { stdin: 7, argv: 1 }.freeze
 
 def main
-  option
-  ARGV.empty? ? stdin : argv
+  option = ARGV.getopts('l')
+  ARGV.empty? ? stdin(option) : argv(option)
 end
 
-def stdin
-  result = lines_words_size($stdin.readlines, '')
-  display(result, digit(result, :stdin))
+def stdin(option)
+  lws = lines_words_size($stdin.readlines, '') # lws = lines / words / size の意
+  digit = option['l'] ? 1 : digit(lws, :stdin)
+  display(option, [] << lws, digit)
 end
 
-def argv
+def argv(option)
   if ARGV.size.eql?(1)
-    lws = lines_words_size(File.readlines(ARGV[0]), ARGV[0]) # lws = lines / words / size
-    digit = digit(lws, :argv)
-    display(lws, digit)
+    lws = lines_words_size(File.readlines(ARGV[0]), ARGV[0])
+    digit = option['l'] ? 1 : digit(lws, :argv)
+    display(option, [] << lws, digit)
   else
-    lws_list =
-      ARGV.map do |arg|
-        lines_words_size(File.readlines(arg), arg)
-      end
-    sums = sums(lws_list)
-    digit = digit(sums, :argv)
-    lws_list.each { |element| display(element, digit) }
-    display(sums, digit)
+    lws_list = ARGV.map { |arg| lines_words_size(File.readlines(arg), arg) }
+    lws_list << sums(lws_list)
+    display(option, lws_list, digit(lws_list.last, :argv))
   end
 end
 
@@ -43,13 +41,12 @@ end
 
 # 出力時の各列の桁は各列(行数/単語数/ファイルサイズ)の中で最も大きい桁数で揃える
 def digit(file, process_type)
-  digit = DIGIT[process_type]
-  file.each do |key, value|
-    next if key.eql?(:name)
-
-    digit = value.digits.size if digit < value.digits.size
-  end
-  digit
+  [
+    DIGIT[process_type],
+    file[:lines].digits.size,
+    file[:words].digits.size,
+    file[:size].digits.size
+  ].max
 end
 
 def lines_words_size(contents, arg)
@@ -61,8 +58,14 @@ def lines_words_size(contents, arg)
   }
 end
 
-def display(file, digit)
-  printf("%#{digit}s %#{digit}s %#{digit}s %s\n", file[:lines], file[:words], file[:size], file[:name])
+def display(option, lws_list, digit)
+  lws_list.each do |lws|
+    if option['l']
+      printf("%#{digit}s %s\n", lws[:lines], lws[:name])
+    else
+      printf("%#{digit}s %#{digit}s %#{digit}s %s\n", lws[:lines], lws[:words], lws[:size], lws[:name])
+    end
+  end
 end
 
 main
