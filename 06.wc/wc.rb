@@ -16,7 +16,7 @@ def stdin(option)
 end
 
 def argv(option)
-  if ARGV.size.eql?(1)
+  if ARGV.size == 1
     lws = lines_words_size(File.readlines(ARGV[0]), ARGV[0])
     digit = option['l'] ? 1 : max_digit(lws, :argv)
     display(option, [] << lws, digit)
