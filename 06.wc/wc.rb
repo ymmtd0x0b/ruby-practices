@@ -11,19 +11,19 @@ end
 
 def stdin(option)
   lws = lines_words_size($stdin.readlines, '') # lws = lines / words / size の意
-  digit = option['l'] ? 1 : digit(lws, :stdin)
+  digit = option['l'] ? 1 : max_digit(lws, :stdin)
   display(option, [] << lws, digit)
 end
 
 def argv(option)
   if ARGV.size.eql?(1)
     lws = lines_words_size(File.readlines(ARGV[0]), ARGV[0])
-    digit = option['l'] ? 1 : digit(lws, :argv)
+    digit = option['l'] ? 1 : max_digit(lws, :argv)
     display(option, [] << lws, digit)
   else
     lws_list = ARGV.map { |arg| lines_words_size(File.readlines(arg), arg) }
     lws_list << sums(lws_list)
-    display(option, lws_list, digit(lws_list.last, :argv))
+    display(option, lws_list, max_digit(lws_list.last, :argv))
   end
 end
 
@@ -40,7 +40,7 @@ def sums(lws_list)
 end
 
 # 出力時の各列の桁は各列(行数/単語数/ファイルサイズ)の中で最も大きい桁数で揃える
-def digit(file, process_type)
+def max_digit(file, process_type)
   [
     DIGIT[process_type],
     file[:lines].digits.size,
