@@ -28,15 +28,13 @@ def argv(option)
 end
 
 def sums(lws_list)
-  sum = { name: '合計', lines: 0, words: 0, size: 0 }
-  lws_list.each do |lws|
-    lws.each do |key, value|
-      next if key.eql?(:name)
-
-      sum[key] += value
+  sum = { lines: 0, words: 0, size: 0 }
+  sum.each_key do |key|
+    lws_list.each do |lws|
+      sum[key] += lws[key]
     end
   end
-  sum
+  sum.merge(name: '合計')
 end
 
 # 出力時の各列の桁は各列(行数/単語数/ファイルサイズ)の中で最も大きい桁数で揃える
