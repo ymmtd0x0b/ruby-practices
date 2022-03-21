@@ -10,18 +10,18 @@ def main
 end
 
 def stdin(option)
-  lws = lines_words_size($stdin.readlines, '') # lws = lines / words / size の意
+  lws = lines_words_size(contents: $stdin.readlines, file_name: '') # lws = lines / words / size の意
   digit = option['l'] ? 1 : max_digit(lws, :stdin)
   display(option, [lws], digit)
 end
 
 def argv(option)
   if ARGV.size == 1
-    lws = lines_words_size(File.readlines(ARGV[0]), ARGV[0])
+    lws = lines_words_size(contents: File.readlines(ARGV[0]), file_name: ARGV[0])
     digit = option['l'] ? 1 : max_digit(lws, :argv)
     display(option, [lws], digit)
   else
-    lws_list = ARGV.map { |arg| lines_words_size(File.readlines(arg), arg) }
+    lws_list = ARGV.map { |arg| lines_words_size(contents: File.readlines(arg), file_name: arg) }
     lws_list << sums(lws_list)
     display(option, lws_list, max_digit(lws_list.last, :argv))
   end
@@ -47,9 +47,9 @@ def max_digit(file, process_type)
   ].max
 end
 
-def lines_words_size(contents, arg)
+def lines_words_size(contents:, file_name:)
   {
-    name: arg,
+    name: file_name,
     lines: contents.count,
     words: contents.join.split(nil).count,
     size: contents.join.bytesize
