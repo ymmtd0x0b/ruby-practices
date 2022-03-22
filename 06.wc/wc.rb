@@ -2,7 +2,7 @@
 
 require 'optparse'
 
-DIGIT = { stdin: 7, argv: 1 }.freeze
+DEFAULT_DIGIT_SIZE = { stdin: 7, argv: 1 }.freeze
 
 def main
   option = ARGV.getopts('l')
@@ -40,7 +40,7 @@ end
 # 出力時の各列の桁は各列(行数/単語数/ファイルサイズ)の中で最も大きい桁数で揃える
 def max_digit_size(file, process_type)
   [
-    DIGIT[process_type],
+    DEFAULT_DIGIT_SIZE[process_type],
     file[:lines].digits.size,
     file[:words].digits.size,
     file[:size].digits.size
@@ -51,7 +51,7 @@ def lines_words_size(contents:, file_name:)
   {
     name: file_name,
     lines: contents.count,
-    words: contents.join.split(nil).count,
+    words: contents.join.split.count,
     size: contents.join.bytesize
   }
 end
