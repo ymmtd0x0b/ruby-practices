@@ -22,12 +22,14 @@ def argv(option)
     display(option, [lws], digit)
   else
     lws_list = ARGV.map { |arg| lines_words_size(contents: File.readlines(arg), file_name: arg) }
-    lws_list << sums(lws_list)
-    display(option, lws_list, max_digit_size(lws_list.last, :argv))
+    lws_sums = sum_lines_words_size(lws_list)
+    lws_list << lws_sums
+    digit = max_digit_size(lws_sums, :argv)
+    display(option, lws_list, digit)
   end
 end
 
-def sums(lws_list)
+def sum_lines_words_size(lws_list)
   sum = { lines: 0, words: 0, size: 0 }
   sum.each_key do |key|
     lws_list.each do |lws|
