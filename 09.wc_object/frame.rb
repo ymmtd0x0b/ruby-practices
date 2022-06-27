@@ -3,27 +3,19 @@
 class Frame
   attr_reader :shots
 
-  def initialize(shots=[])
+  def initialize(shots = [])
     @shots = shots
   end
 
-  # def first_shot
-  #   shots[0]
-  # end
-
-  # def second_shot
-  #   shots[1]
-  # end
-
   def score
-    shots.sum { |shot| shot.score }
+    @shots.sum(&:score)
   end
 
   def strike?
-    shots[0].score == 10
+    @shots[0].score == 10
   end
 
   def spare?
-    shots.sum { |shot| shot.score } == 10
+    @shots.size == 2 && score == 10
   end
 end
