@@ -1,19 +1,14 @@
 # frozen_string_literal: true
 
-require_relative './frames_factory'
+require_relative './frames'
+require_relative './point_rule'
 
 class Game
   def initialize(score)
-    @frames = FramesFactory.build(score)
+    @frames = Frames.new(score)
   end
 
   def score
-    @frames.each_with_index.sum do |frame, idx|
-      if frame.strike? || frame.spare?
-        @frames.next_three_shots_score(idx)
-      else
-        frame.score
-      end
-    end
+    PointRule.score(frames: @frames)
   end
 end

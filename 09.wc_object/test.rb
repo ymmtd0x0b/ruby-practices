@@ -3,17 +3,20 @@
 require 'test/unit'
 require_relative './shot'
 require_relative './frame'
+require_relative './frames'
 require_relative './game'
 
 class TestShot < Test::Unit::TestCase
-  test 'Translate "0" to 0' do
-    shot = Shot.new('0')
-    assert_equal 0, shot.score
-  end
+  sub_test_case 'Translate mark to score' do
+    test '"0" to 0' do
+      shot = Shot.new('0')
+      assert_equal 0, shot.score
+    end
 
-  test 'Translate "X" to 10' do
-    shot = Shot.new('X')
-    assert_equal 10, shot.score
+    test '"X" to 10' do
+      shot = Shot.new('X')
+      assert_equal 10, shot.score
+    end
   end
 end
 
@@ -26,43 +29,57 @@ class TestFrame < Test::Unit::TestCase
     @shot10 = Shot.new('X')
   end
 
-  test 'Frame.score method' do
-    frame = Frame.new([@shot1, @shot2])
-    assert_equal 3, frame.score
+  sub_test_case 'Frame score' do
+    test '[1,2] == 3' do
+      frame = Frame.new([@shot1, @shot2])
+      assert_equal 3, frame.score
+    end
 
-    frame = Frame.new([@shot10])
-    assert_equal 10, frame.score
+    test 'Strike == 10' do
+      frame = Frame.new([@shot10])
+      assert_equal 10, frame.score
+    end
 
-    frame = Frame.new([@shot10, @shot10, @shot10])
-    assert_equal 30, frame.score
+    test 'All Strike in LastFrame == 30' do
+      frame = Frame.new([@shot10, @shot10, @shot10])
+      assert_equal 30, frame.score
+    end
   end
 
-  test 'Frame.strike?' do
-    frame = Frame.new([@shot1, @shot2])
-    assert_false frame.strike?
+  sub_test_case 'Confirmation strike' do
+    test '[1,2] is not strike' do
+      frame = Frame.new([@shot1, @shot2])
+      assert_false frame.strike?
+    end
 
-    frame = Frame.new([@shot10])
-    assert_true frame.strike?
+    test '[X] is strike' do
+      frame = Frame.new([@shot10])
+      assert_true frame.strike?
+    end
   end
 
-  test 'Frame.spare?' do
-    frame = Frame.new([@shot1, @shot2])
-    assert_false frame.spare?
+  sub_test_case 'Confirmation spare' do
+    test '[1,2] = 3 is not spare' do
+      frame = Frame.new([@shot1, @shot2])
+      assert_false frame.spare?
+    end
 
-    frame = Frame.new([@shot3, @shot7])
-    assert_true frame.spare?
+    test '[3,7] = 10 is spare' do
+      frame = Frame.new([@shot3, @shot7])
+      assert_true frame.spare?
+    end
   end
 end
 
-class TestFrames < Test::Unit::TestCase
-  test 'Frames.next_three_shots_score' do
-    frames = FramesFactory.build('X,X,X,X,X,X,X,X,X,X,X,X')
-    assert_equal 30, frames.next_three_shots_score(0)
+# class TestFrames < Test::Unit::TestCase
+#   test 'Frames.next_shots_score' do
+#     frames = Frames.new('X,X,X,X,X,X,X,X,X,X,X,X')
+#     assert_equal 20, frames.next_shots_score(idx: 0, throws: 2)
 
-    frames = FramesFactory.build('1,9,X,X,X,X,X,X,X,X,X,X,X')
-    assert_equal 20, frames.next_three_shots_score(0)
-  end
-end
+#     frames = Frames.new('X,X,X,X,X,X,X,X,X,X,X,X,X')
+#     assert_equal 10, frames.next_shots_score(idx: 0, throws: 1)
+#   end
+# end
 
 class TestGame < Test::Unit::TestCase
   test '6,3,9,0,0,3,8,2,7,3,X,9,1,8,0,X,6,4,5' do
