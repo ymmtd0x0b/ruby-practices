@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require_relative './frames'
+require_relative './frames_factory'
 require_relative './point_rule'
 
 class Game
   def initialize(score)
-    @frames = Frames.new(score)
+    @frames = FramesFactory.create(score)
   end
 
   def score

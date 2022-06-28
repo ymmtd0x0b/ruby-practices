@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
-if __FILE__ == $PROGRAM_NAME
-  pp __FILE__
-  pp $PROGRAM_NAME
+def main
+  score = ARGV[0]
+  game = Game.new(score)
+  puts game.score
 end
+
+main
