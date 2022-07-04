@@ -3,6 +3,8 @@
 class Frame
   attr_reader :shots
 
+  BONUS_SCORE = 10
+
   def initialize(shots = [])
     @shots = shots
   end
@@ -12,10 +14,10 @@ class Frame
   end
 
   def strike?
-    @shots[0].score == 10
+    @shots[0].score == BONUS_SCORE
   end
 
   def spare?
-    @shots.size == 2 && score == 10
+    @shots.size == 2 && score == BONUS_SCORE
   end
 end
