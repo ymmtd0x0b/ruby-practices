@@ -9,23 +9,15 @@ module FramesFactory
 
   class << self
     def create(score)
-      scores = score.split(',').map { |mark| create_shot(mark) }
+      scores = score.split(',').map { |mark| Shot.new(mark) }
 
       Array.new(FRAMES_PER_GAME) do |idx|
         num = shots_per_frame(nth_frame: idx, first_shot_score: scores[0].score)
-        create_frame(scores.shift(num))
+        Frame.new(scores.shift(num))
       end
     end
 
     private
-
-    def create_shot(mark)
-      Shot.new(mark)
-    end
-
-    def create_frame(shots)
-      Frame.new(shots)
-    end
 
     def shots_per_frame(nth_frame:, first_shot_score:)
       if nth_frame == LAST_FRAME # ラストフレームは最大３投
