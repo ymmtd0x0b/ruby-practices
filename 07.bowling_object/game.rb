@@ -24,7 +24,7 @@ class Game
   # 次のフレームから指定投球分(count)を合計し、その数値分をボーナスとする
   def bonus_score(idx:, count:)
     next_idx = idx + 1
-    target_frames = frames.slice(next_idx, 2).compact # 最大２フレーム分が計算対象となる
+    target_frames = @frames.slice(next_idx, 2).compact # 最大２フレーム分が計算対象となる
     shots = target_frames.map(&:shots)
     shots.flatten.slice(0, count).sum(&:score)
   end
