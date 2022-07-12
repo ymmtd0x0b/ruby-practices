@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
 require 'test/unit'
-require_relative '../ls'
+require_relative '../short_ls'
+require_relative '../long_ls'
 
-class TestLs < Test::Unit::TestCase
+class TestShortLs < Test::Unit::TestCase
   test 'short_ls' do
     expected = <<~TEXT.chomp
       Desktop    Public          fjord
@@ -12,6 +13,13 @@ class TestLs < Test::Unit::TestCase
       Music      VirtualBox VMs
       Pictures   bin
     TEXT
-    assert_equal expected, Ls.short_ls
+    assert_equal expected, ShortLs.new([]).lines
+  end
+end
+
+class TestLongLs < Test::Unit::TestCase
+  test 'long_ls' do
+    expected = `ls -l #{Dir.home}`.chomp
+    assert_equal expected, LongLs.new([]).lines
   end
 end
