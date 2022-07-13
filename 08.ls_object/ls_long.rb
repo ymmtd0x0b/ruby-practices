@@ -16,7 +16,7 @@ class LsLong < Ls
     '7' => 'rwx'
   }.freeze
 
-  def molding
+  def run
     files_status =
       @files.map do |fname|
         fstatus = File.lstat(fname)

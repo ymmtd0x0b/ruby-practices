@@ -12,7 +12,5 @@ class Ls
     @files = Dir.glob(*params)
 
     @files = reverse ? @files.reverse : @files.sort
-
-    @lines = molding
   end
 end

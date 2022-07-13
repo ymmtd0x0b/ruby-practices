@@ -5,14 +5,11 @@ require_relative './ls_long'
 
 def main
   opt = ARGV.getopts('alr')
+  params = { dot_match: opt['a'], reverse: opt['r'] }
 
-  ls =
-    if opt['l']
-      LsLong.new(dot_match: opt['a'], reverse: opt['r'])
-    else
-      LsShort.new(dot_match: opt['a'], reverse: opt['r'])
-    end
-  puts ls.lines
+  ls = opt['l'] ? LsLong.new(**params) : LsShort.new(**params)
+
+  puts ls.run
 end
 
 main
