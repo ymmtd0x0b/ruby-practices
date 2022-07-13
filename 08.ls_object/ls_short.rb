@@ -5,6 +5,10 @@ require_relative './ls'
 class LsShort < Ls
   FIXED_COLMUNS = 3
 
+  def initialize(params)
+    super(**params)
+  end
+
   def run
     # 出力用の雛形(２次元配列)を作成
     row_number = (@files.size.to_f / FIXED_COLMUNS).ceil

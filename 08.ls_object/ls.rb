@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'optparse'
-
 class Ls
   attr_reader :lines
 
@@ -12,5 +10,10 @@ class Ls
     @files = Dir.glob(*params)
 
     @files = reverse ? @files.reverse : @files.sort
+  end
+
+  def run
+    # ダックタイプ用のインターフェース
+    # このメソッドに各オプション毎のアルゴリズムを実装
   end
 end

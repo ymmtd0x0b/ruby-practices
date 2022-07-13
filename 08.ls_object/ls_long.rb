@@ -16,6 +16,10 @@ class LsLong < Ls
     '7' => 'rwx'
   }.freeze
 
+  def initialize(params)
+    super(**params)
+  end
+
   def run
     files_status =
       @files.map do |fname|
