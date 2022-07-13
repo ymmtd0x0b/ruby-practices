@@ -15,11 +15,11 @@ class LsShort < Ls
     files_rows = @files.each_slice(row_number).to_a
 
     # 各行の文字数を取得
-    digits = files_rows.map { |row| row.max_by(&:length).length }
+    max_chars = files_rows.map { |row| row.max_by(&:length).length }
 
     # 左揃え
     tmp = files_rows.map.with_index do |row, idx|
-      row.map { |file| file.ljust(digits[idx]) }
+      row.map { |file| file.ljust(max_chars[idx]) }
     end
 
     # 転置&結合

@@ -37,6 +37,8 @@ class LsLong < Ls
     ["合計 #{total}", *body].join("\n")
   end
 
+  private
+
   def build_status(fname, fstatus)
     {
       type_and_mode: format_type(fstatus) + format_mode(fstatus),

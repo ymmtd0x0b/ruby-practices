@@ -13,13 +13,15 @@ class TestLsShort < Test::Unit::TestCase
       Music      VirtualBox VMs
       Pictures   bin
     TEXT
-    assert_equal expected, LsShort.new.lines
+    params = { dot_match: false, reverse: false }
+    assert_equal expected, LsShort.new(**params).run
   end
 end
 
 class TestLsLong < Test::Unit::TestCase
   test 'long_ls' do
     expected = `ls -l #{Dir.home}`.chomp
-    assert_equal expected, LsLong.new.lines
+    params = { dot_match: false, reverse: false }
+    assert_equal expected, LsLong.new(**params).run
   end
 end
