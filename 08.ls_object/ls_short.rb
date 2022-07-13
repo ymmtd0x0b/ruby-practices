@@ -2,7 +2,7 @@
 
 require_relative './ls'
 
-class ShortLs < Ls
+class LsShort < Ls
   FIXED_COLMUNS = 3
 
   def molding

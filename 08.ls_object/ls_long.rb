@@ -3,7 +3,7 @@
 require 'etc'
 require_relative './ls'
 
-class LongLs < Ls
+class LsLong < Ls
   BLOCK_SIZE = 1024
   MODE_MAP = {
     '0' => '---',
@@ -30,10 +30,7 @@ class LongLs < Ls
     total = files_status.map { |file| file[:size].to_i }.sum / BLOCK_SIZE
     body = files_status.map { |file| format_files(file, max_chars) }
 
-    [
-      "合計 #{total}",
-      *body
-    ].join("\n")
+    ["合計 #{total}", *body].join("\n")
   end
 
   def build_status(fname, fstatus)
@@ -49,7 +46,7 @@ class LongLs < Ls
   end
 
   def format_type(fstatus)
-    %w[directory link].include?(fstatus.ftype) ? fstatus.ftype[0] : ':'
+    %w[directory link].include?(fstatus.ftype) ? fstatus.ftype[0] : '-'
   end
 
   def format_mode(fstatus)
