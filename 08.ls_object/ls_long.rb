@@ -28,7 +28,7 @@ class LsLong < Ls
       end
 
     max_chars = %i[nlink user group size].map do |key|
-      [key, files_status.map { |file| file[key].size }.max]
+      [key, files_status.map { |file| file[key].length }.max]
     end.to_h
 
     total = files_status.map { |file| file[:size].to_i }.sum / BLOCK_SIZE

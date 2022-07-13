@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class Ls
-  attr_reader :lines
-
   def initialize(dot_match: false, reverse: false)
     Dir.chdir(Dir.home)
 
