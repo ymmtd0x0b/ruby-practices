@@ -21,60 +21,60 @@ class LsLong < Ls
   end
 
   def run
-    files_status =
-      @files.map do |fname|
-        fstatus = File.lstat(fname)
-        build_status(fname, fstatus)
+    file_stats =
+      @files.map do |file|
+        stat = File.lstat(file)
+        build_stat(file, stat)
       end
 
     max_chars = %i[nlink user group size].map do |key|
-      [key, files_status.map { |file| file[key].length }.max]
+      [key, file_stats.map { |file| file[key].length }.max]
     end.to_h
 
-    total = files_status.map { |file| file[:size].to_i }.sum / BLOCK_SIZE
-    body = files_status.map { |file| format_files(file, max_chars) }
+    total = file_stats.map { |file| file[:size].to_i }.sum / BLOCK_SIZE
+    body = file_stats.map { |stat| format_stat(stat, max_chars) }
 
     ["合計 #{total}", *body].join("\n")
   end
 
   private
 
-  def build_status(fname, fstatus)
+  def build_stat(file, stat)
     {
-      type_and_mode: format_type(fstatus) + format_mode(fstatus),
-      nlink: fstatus.nlink.to_s,
-      user: Etc.getpwuid(fstatus.uid).name,
-      group: Etc.getgrgid(fstatus.gid).name,
-      size: fstatus.size.to_s,
-      mtime: fstatus.mtime.strftime('%_m月 %_d %H:%M'),
-      fname: format_file_name(fname, fstatus)
+      type_and_mode: format_type(stat) + format_mode(stat),
+      nlink: stat.nlink.to_s,
+      user: Etc.getpwuid(stat.uid).name,
+      group: Etc.getgrgid(stat.gid).name,
+      size: stat.size.to_s,
+      mtime: stat.mtime.strftime('%_m月 %_d %H:%M'),
+      basename: format_basename(file, stat)
     }
   end
 
-  def format_type(fstatus)
-    %w[directory link].include?(fstatus.ftype) ? fstatus.ftype[0] : '-'
+  def format_type(stat)
+    %w[directory link].include?(stat.ftype) ? stat.ftype[0] : '-'
   end
 
-  def format_mode(fstatus)
-    mode = fstatus.mode.digits(8).reverse.slice(-3..)
+  def format_mode(stat)
+    mode = stat.mode.digits(8).reverse.slice(-3..)
     mode.map do |m|
       MODE_MAP[m.to_s]
     end.join
   end
 
-  def format_file_name(fname, fstatus)
-    fstatus.ftype == 'link' ? "#{fname} -> #{File.readlink("./#{fname}")}" : fname
+  def format_basename(file, stat)
+    stat.ftype == 'link' ? "#{file} -> #{File.readlink(file)}" : file
   end
 
-  def format_files(fstatus, max_chars)
+  def format_stat(stat, max_chars)
     [
-      fstatus[:type_and_mode],
-      fstatus[:nlink].rjust(max_chars[:nlink]),
-      fstatus[:user].rjust(max_chars[:user]),
-      fstatus[:group].rjust(max_chars[:group]),
-      fstatus[:size].rjust(max_chars[:size]),
-      fstatus[:mtime],
-      fstatus[:fname]
+      stat[:type_and_mode],
+      stat[:nlink].rjust(max_chars[:nlink]),
+      stat[:user].rjust(max_chars[:user]),
+      stat[:group].rjust(max_chars[:group]),
+      stat[:size].rjust(max_chars[:size]),
+      stat[:mtime],
+      stat[:basename]
     ].join(' ')
   end
 end

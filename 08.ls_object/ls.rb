@@ -2,12 +2,11 @@
 
 class Ls
   def initialize(dot_match: false, reverse: false)
-    Dir.chdir(Dir.home)
-
     params = dot_match ? ['*', File::FNM_DOTMATCH] : ['*']
+
     @files = Dir.glob(*params)
 
-    @files = reverse ? @files.reverse : @files.sort
+    @files = @files.reverse if reverse
   end
 
   def run
