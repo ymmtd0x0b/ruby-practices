@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'optparse'
-require_relative './ls_short'
-require_relative './ls_long'
+require_relative './lib/ls/ls_short'
+require_relative './lib/ls/ls_long'
 
 def main
   opt = ARGV.getopts('alr')
