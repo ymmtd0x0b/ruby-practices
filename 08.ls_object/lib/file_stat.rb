@@ -35,8 +35,8 @@ class FileStat
     [
       @attr[:type_and_mode],
       @attr[:nlink].rjust(max_chars[:nlink]),
-      @attr[:user].rjust(max_chars[:user]),
-      @attr[:group].rjust(max_chars[:group]),
+      @attr[:user].ljust(max_chars[:user]),
+      @attr[:group].ljust(max_chars[:group]),
       @attr[:size].rjust(max_chars[:size]),
       @attr[:mtime],
       @attr[:basename]
