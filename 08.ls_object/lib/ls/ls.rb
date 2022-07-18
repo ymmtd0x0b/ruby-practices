@@ -3,9 +3,16 @@
 # テンプレート
 class Ls
   def initialize(dot_match: false, reverse: false)
-    params = dot_match ? ['*', File::FNM_DOTMATCH] : ['*']
+    path = Dir.pwd
 
-    @paths = Dir.glob(*params, base: Dir.pwd)
+    files =
+      if dot_match
+        Dir.entries(path).sort
+      else
+        Dir.glob('*', base: path).sort
+      end
+
+    @paths = files.map { |file| "#{path}/#{file}" }
 
     @paths = @paths.reverse if reverse
   end

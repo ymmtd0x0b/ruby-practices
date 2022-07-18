@@ -10,12 +10,14 @@ class LsShort < Ls
   end
 
   def run
-    row_number = (@paths.size.to_f / FIXED_COLMUNS).ceil
+    files = @paths.map { |path| File.basename(path) }
+
+    row_number = (files.size.to_f / FIXED_COLMUNS).ceil
 
     table =
-      @paths.each_slice(row_number).map do |row_paths|
-        col_width = row_paths.map(&:length).max
-        row_paths.map { |path| File.basename(path).ljust(col_width) }
+      files.each_slice(row_number).map do |row_files|
+        col_width = row_files.map(&:length).max
+        row_files.map { |file| file.ljust(col_width) }
       end
 
     transpose(table).map do |row|
