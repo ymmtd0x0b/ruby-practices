@@ -3,16 +3,7 @@
 # テンプレート
 class Ls
   def initialize(dot_match: false, reverse: false)
-    # path = Dir.pwd
-
-    @files =
-      if dot_match
-        Dir.entries('.').sort
-      else
-        Dir.glob('*').sort
-      end
-
-    # @paths = files.map { |file| "#{path}/#{file}" }
+    @files = dot_match ? Dir.entries('.').sort : Dir.glob('*').sort
 
     @files = @files.reverse if reverse
   end

@@ -10,8 +10,6 @@ class LsShort < Ls
   end
 
   def run
-    # files = @paths.map { |path| File.basename(path) }
-
     row_number = (@files.size.to_f / FIXED_COLMUNS).ceil
 
     table =

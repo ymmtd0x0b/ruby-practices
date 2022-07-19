@@ -4,7 +4,7 @@ require_relative './ls'
 require_relative '../file_stat'
 
 class LsLong < Ls
-  BLOCK_SIZE = { Bytes: 512, KB: 1024 }.freeze # 1ブロック当たりの単位サイズ
+  BLOCK_SIZE = { Byte: 512, KB: 1024 }.freeze # 1ブロック当たりの単位サイズ
   ALIGN_ATTRIBUTE = %i[nlink user group size].freeze
 
   def initialize(params)
@@ -30,10 +30,10 @@ class LsLong < Ls
   # 作成者の環境では1024Byte(KB)表示なので変換処理を行う
   def convert_unit(key)
     lambda do |total|
-      base_bit_size    = BLOCK_SIZE[:Bytes].bit_length
-      convert_bit_size = BLOCK_SIZE[key].bit_length
+      base_bit_size       = BLOCK_SIZE[:Byte].bit_length
+      conversion_bit_size = BLOCK_SIZE[key].bit_length
 
-      total >> (convert_bit_size - base_bit_size)
+      total >> (conversion_bit_size - base_bit_size)
     end
   end
 end
