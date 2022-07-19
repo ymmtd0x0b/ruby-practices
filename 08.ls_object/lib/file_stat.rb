@@ -16,9 +16,9 @@ class FileStat
     '7' => 'rwx'
   }.freeze
 
-  def initialize(path)
-    @path = path
-    @fstat = File.lstat(path)
+  def initialize(file)
+    @file = file
+    @fstat = File.lstat(file)
 
     @attr = {}
     @attr[:type_and_mode] = format_type + format_mode
@@ -57,7 +57,6 @@ class FileStat
   end
 
   def format_basename
-    file = File.basename(@path)
-    @fstat.ftype == 'link' ? "#{file} -> #{File.readlink(@path)}" : file
+    @fstat.ftype == 'link' ? "#{@file} -> #{File.readlink(@file)}" : @file
   end
 end

@@ -3,18 +3,18 @@
 # テンプレート
 class Ls
   def initialize(dot_match: false, reverse: false)
-    path = Dir.pwd
+    # path = Dir.pwd
 
-    files =
+    @files =
       if dot_match
-        Dir.entries(path).sort
+        Dir.entries('.').sort
       else
-        Dir.glob('*', base: path).sort
+        Dir.glob('*').sort
       end
 
-    @paths = files.map { |file| "#{path}/#{file}" }
+    # @paths = files.map { |file| "#{path}/#{file}" }
 
-    @paths = @paths.reverse if reverse
+    @files = @files.reverse if reverse
   end
 
   def run

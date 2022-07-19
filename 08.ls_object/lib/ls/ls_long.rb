@@ -12,22 +12,23 @@ class LsLong < Ls
   end
 
   def run
-    files = @paths.map { |path| FileStat.new(path) }
+    fstats = @files.map { |file| FileStat.new(file) }
 
     max_chars = ALIGN_ATTRIBUTE.map do |key|
-      [key, files.map { |file| file.attr[key].length }.max]
+      [key, fstats.map { |fstat| fstat.attr[key].length }.max]
     end.to_h
 
-    total = files.map { |file| file.attr[:blocks] }.sum(&unit_conversion(:KB))
-    body = files.map { |file| file.format_stat(max_chars) }
+    total = fstats.map { |fstat| fstat.attr[:blocks] }.sum(&convert_unit(:KB))
+    body = fstats.map { |fstat| fstat.format_stat(max_chars) }
 
     ["合計 #{total}", *body].join("\n")
   end
 
   private
 
-  # 作業者の環境ではKB表示なので変換処理を行う
-  def unit_conversion(key)
+  # 1ブロック当たりのサイズは512Byteだが
+  # 作成者の環境では1024Byte(KB)表示なので変換処理を行う
+  def convert_unit(key)
     lambda do |total|
       base_bit_size    = BLOCK_SIZE[:Bytes].bit_length
       convert_bit_size = BLOCK_SIZE[key].bit_length

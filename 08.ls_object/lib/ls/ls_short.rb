@@ -10,12 +10,12 @@ class LsShort < Ls
   end
 
   def run
-    files = @paths.map { |path| File.basename(path) }
+    # files = @paths.map { |path| File.basename(path) }
 
-    row_number = (files.size.to_f / FIXED_COLMUNS).ceil
+    row_number = (@files.size.to_f / FIXED_COLMUNS).ceil
 
     table =
-      files.each_slice(row_number).map do |row_files|
+      @files.each_slice(row_number).map do |row_files|
         col_width = row_files.map(&:length).max
         row_files.map { |file| file.ljust(col_width) }
       end
