@@ -1,14 +1,13 @@
 # frozen_string_literal: true
 
-require_relative './ls'
-require_relative '../file_stat'
+require_relative '../file/file_stat'
 
-class LsLong < Ls
+class LsLong
   BLOCK_SIZE = { Byte: 512, KB: 1024 }.freeze # 1ブロック当たりの単位サイズ
   JUSTIFY_ATTRIBUTES = %i[nlink user group size].freeze
 
-  def initialize(params)
-    super(**params)
+  def initialize(files)
+    @files = files
   end
 
   def run

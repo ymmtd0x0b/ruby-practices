@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'test/unit'
-require_relative '../lib/file_stat'
+require_relative '../lib/file/file_stat'
 
 class FileStatTest < Test::Unit::TestCase
   def test_format_stat

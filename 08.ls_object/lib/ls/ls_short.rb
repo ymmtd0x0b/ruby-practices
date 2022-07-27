@@ -1,12 +1,10 @@
 # frozen_string_literal: true
 
-require_relative './ls'
-
-class LsShort < Ls
+class LsShort
   FIXED_COLMUNS = 3
 
-  def initialize(params)
-    super(**params)
+  def initialize(files)
+    @files = files
   end
 
   def run
