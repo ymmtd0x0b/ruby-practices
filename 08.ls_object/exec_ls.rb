@@ -12,7 +12,6 @@ def main
   files = FileLoader.load_files(**params)
 
   ls = opt['l'] ? LsLong.new(files) : LsShort.new(files)
-
   puts ls.run
 end
 
