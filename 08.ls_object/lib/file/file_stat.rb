@@ -3,7 +3,7 @@
 require 'etc'
 
 class FileStat
-  attr_reader :attr
+  attr_reader :blocks, :nlink, :user, :group, :size
 
   MODE_MAP = {
     '0' => '---',
@@ -20,26 +20,25 @@ class FileStat
     @file = file
     @fstat = File.lstat(file)
 
-    @attr = {}
-    @attr[:type_and_mode] = format_type + format_mode
-    @attr[:nlink]         = @fstat.nlink.to_s
-    @attr[:user]          = Etc.getpwuid(@fstat.uid).name
-    @attr[:group]         = Etc.getgrgid(@fstat.gid).name
-    @attr[:size]          = @fstat.size.to_s
-    @attr[:mtime]         = @fstat.mtime.strftime('%_m月 %_d %H:%M')
-    @attr[:basename]      = format_basename
-    @attr[:blocks]        = @fstat.blocks
+    @type_and_mode = format_type + format_mode
+    @nlink         = @fstat.nlink.to_s
+    @user          = Etc.getpwuid(@fstat.uid).name
+    @group         = Etc.getgrgid(@fstat.gid).name
+    @size          = @fstat.size.to_s
+    @mtime         = @fstat.mtime.strftime('%_m月 %_d %H:%M')
+    @basename      = format_basename
+    @blocks        = @fstat.blocks
   end
 
-  def format_stat(max_chars)
+  def format_stat(max_chars = { nlink: 0, user: 0, group: 0, size: 0 })
     [
-      @attr[:type_and_mode],
-      @attr[:nlink].rjust(max_chars[:nlink]),
-      @attr[:user].ljust(max_chars[:user]),
-      @attr[:group].ljust(max_chars[:group]),
-      @attr[:size].rjust(max_chars[:size]),
-      @attr[:mtime],
-      @attr[:basename]
+      @type_and_mode,
+      @nlink.rjust(max_chars[:nlink]),
+      @user.ljust(max_chars[:user]),
+      @group.ljust(max_chars[:group]),
+      @size.rjust(max_chars[:size]),
+      @mtime,
+      @basename
     ].join(' ')
   end
 

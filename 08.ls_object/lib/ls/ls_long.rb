@@ -4,7 +4,7 @@ require_relative '../file/file_stat'
 
 class LsLong
   BLOCK_SIZE = { Byte: 512, KB: 1024 }.freeze # 1ブロック当たりの単位サイズ
-  JUSTIFY_ATTRIBUTES = %i[nlink user group size].freeze
+  JUSTIFY_COLMUNS = %i[nlink user group size].freeze
 
   def initialize(files)
     @files = files
@@ -13,11 +13,11 @@ class LsLong
   def run
     fstats = @files.map { |file| FileStat.new(file) }
 
-    block_total = fstats.map { |fstat| fstat.attr[:blocks] }.sum
+    block_total = fstats.map(&:blocks).sum
     total = "合計 #{convert_unit(block_total, unit: :KB)}"
 
-    max_chars = JUSTIFY_ATTRIBUTES.map do |key|
-      [key, fstats.map { |fstat| fstat.attr[key].length }.max]
+    max_chars = JUSTIFY_COLMUNS.map do |col|
+      [col, fstats.map { |fstat| fstat.send(col).length }.max]
     end.to_h
     body = fstats.map { |fstat| fstat.format_stat(max_chars) }
 
